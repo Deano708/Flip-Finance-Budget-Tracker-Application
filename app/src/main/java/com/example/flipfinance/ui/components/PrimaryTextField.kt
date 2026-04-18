@@ -1,6 +1,7 @@
 package com.example.flipfinance.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 
 /*
    Title: Rows, Columns & Basic Sizing - Android Jetpack Compose - Part 2
@@ -41,6 +43,7 @@ fun PrimaryTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
+    errorText: String? = null,
     isPassword: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -49,8 +52,17 @@ fun PrimaryTextField(
         onValueChange = onValueChange,
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(),
+        isError = errorText != null,
         shape = MaterialTheme.shapes.medium,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         singleLine = true
     )
+    if (errorText != null) {
+        Text(
+            text = errorText,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+        )
+    }
 }

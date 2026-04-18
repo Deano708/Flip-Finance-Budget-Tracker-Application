@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flipfinance.domain.model.User
 import com.example.flipfinance.domain.repository.AuthRepository
+import com.example.flipfinance.domain.util.AuthValidator
+import com.example.flipfinance.domain.util.PasswordResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,11 +41,42 @@ class AuthViewModel @Inject constructor(
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated = _isAuthenticated.asStateFlow()
 
+    private val _emailError = MutableStateFlow<String?>(null)
+    val emailError = _emailError.asStateFlow()
+
+    private val _passwordError = MutableStateFlow<String?>(null)
+    val passwordError = _passwordError.asStateFlow()
+
+    // Clear Errors when user Inputs text after failure
+    fun onEmailChange() { _emailError.value = null }
+    fun onPasswordChange() { _passwordError.value = null }
+
     fun onEvent(event: AuthEvent) {
         when (event) {
-            is AuthEvent.Login -> performAction { repository.login(event.email, event.pass) }
-            is AuthEvent.Register -> performAction { repository.register(event.email, event.pass) }
+            is AuthEvent.Login -> {
+                if (validateInputs(event.email, event.pass)) {
+                    performAction { repository.login(event.email, event.pass) }
+                }
+            }
+            is AuthEvent.Register -> {
+                if (validateInputs(event.email, event.pass)) {
+                    performAction { repository.register(event.email, event.pass) }
+                }
+            }
         }
+    }
+
+    private fun validateInputs(email: String, pass: String): Boolean {
+        val isEmailValid = AuthValidator.isValidEmail(email)
+        val passwordResult = AuthValidator.validatePassword(pass)
+
+        if (!isEmailValid) _emailError.value = "Please enter a Valid Email Address"
+
+        if (passwordResult is PasswordResult.Invalid) {
+            _passwordError.value = passwordResult.message
+        }
+
+        return isEmailValid && passwordResult is PasswordResult.Valid
     }
 
     private fun performAction(action: suspend () -> Result<Unit>) {

@@ -69,8 +69,9 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.error.collectAsState()
     val isAuthenticated by viewModel.isAuthenticated.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) onRegisterSuccess()
@@ -84,11 +85,28 @@ fun RegisterScreen(
         Text("Create Account", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(32.dp))
 
-        PrimaryTextField(value = email, onValueChange = { email = it }, label = "Email")
+        PrimaryTextField(
+            value = email,
+            onValueChange = {
+                email = it
+                viewModel.onEmailChange()
+            },
+            label = "Email",
+            errorText = emailError
+        )
         Spacer(Modifier.height(16.dp))
-        PrimaryTextField(value = password, onValueChange = { password = it }, label = "Password", isPassword = true)
 
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
+        PrimaryTextField(
+            value = password,
+            onValueChange = {
+                password = it
+                viewModel.onPasswordChange()
+            },
+            label = "Password",
+            isPassword = true,
+            errorText = passwordError
+        )
+
         Spacer(Modifier.height(24.dp))
 
         PrimaryButton(text = "Sign Up", isLoading = isLoading, onClick = { viewModel.onEvent(
