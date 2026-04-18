@@ -36,4 +36,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(fbAuth: FirebaseAuth): AuthRepository =
+        FirebaseAuthRepository(fbAuth)
+
 }
