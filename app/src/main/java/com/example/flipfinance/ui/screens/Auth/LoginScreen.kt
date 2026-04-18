@@ -1,12 +1,15 @@
 package com.example.flipfinance.ui.screens.Auth
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,8 +72,10 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.error.collectAsState()
     val isAuthenticated by viewModel.isAuthenticated.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) onLoginSuccess()
@@ -82,6 +87,7 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text("Welcome Back", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+
         Spacer(Modifier.height(32.dp))
 
         PrimaryTextField(value = email, onValueChange = { email = it }, label = "Email")
@@ -89,6 +95,8 @@ fun LoginScreen(
         PrimaryTextField(value = password, onValueChange = { password = it }, label = "Password", isPassword = true)
 
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
+        Spacer(Modifier.height(24.dp))
+
         Spacer(Modifier.height(24.dp))
 
         PrimaryButton(text = "Login", isLoading = isLoading, onClick = { viewModel.onEvent(AuthEvent.Login(email, password)) })
