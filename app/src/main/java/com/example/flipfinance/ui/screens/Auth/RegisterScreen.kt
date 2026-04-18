@@ -77,6 +77,10 @@ fun RegisterScreen(
         if (isAuthenticated) onRegisterSuccess()
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.clearErrors()
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

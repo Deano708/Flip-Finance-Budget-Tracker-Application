@@ -53,11 +53,7 @@ class AuthViewModel @Inject constructor(
 
     fun onEvent(event: AuthEvent) {
         when (event) {
-            is AuthEvent.Login -> {
-                if (validateInputs(event.email, event.pass)) {
-                    performAction { repository.login(event.email, event.pass) }
-                }
-            }
+            is AuthEvent.Login -> performAction { repository.login(event.email, event.pass) }
             is AuthEvent.Register -> {
                 if (validateInputs(event.email, event.pass)) {
                     performAction { repository.register(event.email, event.pass) }
@@ -89,6 +85,14 @@ class AuthViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+
+    fun clearErrors() {
+        _emailError.value = null
+        _passwordError.value = null
+        _error.value = null
+    }
+
+
 }
 
 sealed class AuthEvent {
