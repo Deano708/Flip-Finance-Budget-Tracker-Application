@@ -74,6 +74,7 @@ dependencies {
     // RoomDB (Using KSP)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.ui)
     ksp(libs.androidx.room.compiler)
 
     // Firebase (Using BoM)

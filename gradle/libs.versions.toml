@@ -14,6 +14,7 @@ ui = "1.10.3"
 room = "2.8.4"
 ksp = "2.0.21-1.0.27"
 firebase-firestore-ktx = "26.1.2"
+ui-version = "1.10.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.12.0" }
@@ -47,6 +48,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebase-firestore-ktx" }
+ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui-version" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
