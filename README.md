@@ -55,7 +55,7 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 
 ---
 
-## Implementation Details (Phase 1)
+## Implementation Details
 
 ### Authentication Flow
 - **AuthViewModel**: Manages authentication states (`isLoading`, `error`, `isAuthenticated`).
