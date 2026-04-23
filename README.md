@@ -9,6 +9,7 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 ### User Authentication & Identity
 - **Secure Onboarding**: Login and Registration flows with real-time input validation.
 - **Identity Management**: Powered by **Firebase Authentication** for secure email/password sign-in.
+- **Self-Service Password Recovery**: Integrated "Forgot Password" flow utilizing Firebase's secure email reset system.
 
 ### Input Validation & UX
 - **Context-Aware Error Handling**: Field-level validation that guides users with specific messages (e.g., "Invalid email format" or "Password too short").
