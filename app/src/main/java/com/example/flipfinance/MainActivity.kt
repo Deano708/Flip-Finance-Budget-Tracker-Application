@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
                 val currentUser by authViewModel.currentUser.collectAsState(initial = null)
 
                 // Only show BottomBar if not on Auth screens and User is logged in
-                val authRoutes = listOf(Screen.Login.route, Screen.Register.route)
+                val authRoutes = listOf(Screen.Login.route, Screen.Register.route, Screen.ForgotPassword.route)
                 val ShowBottomBar = currentRoute !in authRoutes && currentUser != null
 
                 // Handle session logout
