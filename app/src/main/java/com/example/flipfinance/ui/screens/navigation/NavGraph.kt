@@ -14,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.flipfinance.ViewModel.AuthViewModel
+import com.example.flipfinance.ui.screens.Auth.ForgotPasswordScreen
 import com.example.flipfinance.ui.screens.Auth.LoginScreen
 import com.example.flipfinance.ui.screens.Auth.RegisterScreen
 
@@ -48,7 +49,8 @@ fun NavGraph(
                     navController.navigate(Screen.Transactions.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                }
+                },
+                onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) }
             )
         }
 
@@ -61,6 +63,13 @@ fun NavGraph(
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(
+                viewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() }  // removes the current screen from the stack
             )
         }
 

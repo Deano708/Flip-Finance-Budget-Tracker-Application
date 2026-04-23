@@ -13,6 +13,7 @@ sealed class Screen(val route: String, val title: String? = null, val icon: Imag
     // Auth Routes
     object Login : Screen("login")
     object Register : Screen("register")
+    object ForgotPassword : Screen("forgot_password")
 
     // Main App Routes
     object Home : Screen("home", "Home", Icons.Default.Home)

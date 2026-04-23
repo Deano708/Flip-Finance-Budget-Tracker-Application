@@ -27,6 +27,15 @@ import com.example.flipfinance.domain.model.User
    Availability: https://youtu.be/KOnLpNZ4AFc?si=0_ykHIWXJTBMgkbb
 */
 
+/*
+   Title: How To Implement the Reset Password in Firebase using Android Studio and Kotlin
+   Author: tutorialsEU
+   Date: 5 year ago
+   Date accessed: 23/04/2026
+   Code version : 1
+   Availability: https://youtu.be/nVhPqPpgndM?si=-2e5lkDbB83rUAoS
+*/
+
 
 class FirebaseAuthRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth
@@ -52,4 +61,11 @@ class FirebaseAuthRepository @Inject constructor(
     }
 
     override fun logout() = firebaseAuth.signOut()
+
+    // Reset Password
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> = runCatching {
+        firebaseAuth.sendPasswordResetEmail(email).await()
+        Unit
+    }
+
 }

@@ -47,16 +47,31 @@ class AuthViewModel @Inject constructor(
     private val _passwordError = MutableStateFlow<String?>(null)
     val passwordError = _passwordError.asStateFlow()
 
+    // Reset User Password
+    private val _resetEmailSent = MutableStateFlow(false)
+    val resetEmailSent = _resetEmailSent.asStateFlow()
+
     // Clear Errors when user Inputs text after failure
     fun onEmailChange() { _emailError.value = null }
     fun onPasswordChange() { _passwordError.value = null }
 
     fun onEvent(event: AuthEvent) {
         when (event) {
-            is AuthEvent.Login -> performAction { repository.login(event.email, event.pass) }
+            is AuthEvent.Login -> performAction(shouldAuthenticate = true) { repository.login(event.email, event.pass) }
             is AuthEvent.Register -> {
                 if (validateInputs(event.email, event.pass)) {
-                    performAction { repository.register(event.email, event.pass) }
+                    performAction(shouldAuthenticate = true) { repository.register(event.email, event.pass) }
+                }
+            }
+            is AuthEvent.ResetPassword -> {
+                if (AuthValidator.isValidEmail(event.email)) {
+                    performAction(shouldAuthenticate = false) {
+                        val result = repository.sendPasswordResetEmail(event.email)
+                        if (result.isSuccess) _resetEmailSent.value = true
+                        result
+                    }
+                } else {
+                    _emailError.value = "Please Enter a Valid Email Address"
                 }
             }
         }
@@ -75,12 +90,18 @@ class AuthViewModel @Inject constructor(
         return isEmailValid && passwordResult is PasswordResult.Valid
     }
 
-    private fun performAction(action: suspend () -> Result<Unit>) {
+    private fun performAction(
+        shouldAuthenticate: Boolean = false,
+        action: suspend () -> Result<Unit>) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             action()
-                .onSuccess { _isAuthenticated.value = true }
+                .onSuccess {
+                    if (shouldAuthenticate) {
+                        _isAuthenticated.value = true  // Set to true if it was a Login or Register event
+                    }
+                }
                 .onFailure { _error.value = it.message }
             _isLoading.value = false
         }
@@ -98,4 +119,6 @@ class AuthViewModel @Inject constructor(
 sealed class AuthEvent {
     data class Login(val email: String, val pass: String) : AuthEvent()
     data class Register(val email: String, val pass: String) : AuthEvent()
+
+    data class ResetPassword(val email: String) : AuthEvent()
 }
