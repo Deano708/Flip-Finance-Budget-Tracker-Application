@@ -1,4 +1,4 @@
-package com.example.flipfinance.ui.screens.Main
+package com.example.flipfinance.ui.screens.Transaction
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
