@@ -14,9 +14,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.flipfinance.ViewModel.AuthViewModel
+import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.ui.screens.Auth.ForgotPasswordScreen
 import com.example.flipfinance.ui.screens.Auth.LoginScreen
 import com.example.flipfinance.ui.screens.Auth.RegisterScreen
+import com.example.flipfinance.ui.screens.Main.TransactionScreen
 
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
@@ -81,9 +83,16 @@ fun NavGraph(
         }
 
         composable(Screen.Transactions.route) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Transaction Screen")
-            }
+            // Hilt handles the factory and injection automatically here
+            val transactionViewModel: TransactionViewModel = hiltViewModel()
+
+            TransactionScreen(
+                viewModel = transactionViewModel,
+                onTransactionClick = { transaction ->
+                    // Handle click (e.g., navigate to detail or show a toast)
+                    println("Selected: ${transaction.title}")
+                }
+            )
         }
 
         composable(Screen.Streak.route) {

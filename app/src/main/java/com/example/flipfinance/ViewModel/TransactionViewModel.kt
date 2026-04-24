@@ -9,9 +9,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.data.local.util.TransactionDao
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 
-class TransactionViewModel(private val dao: TransactionDao) : ViewModel() {
+@HiltViewModel
+class TransactionViewModel @Inject constructor(
+    private val dao: TransactionDao)
+    : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
