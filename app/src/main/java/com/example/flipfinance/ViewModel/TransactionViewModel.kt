@@ -1,0 +1,37 @@
+package com.example.flipfinance.ViewModel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import com.example.flipfinance.data.local.Entities.Transaction
+import com.example.flipfinance.data.local.util.TransactionDao
+
+
+class TransactionViewModel(private val dao: TransactionDao) : ViewModel() {
+
+    private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+    // Automatically updates the UI list when the database changes
+    val transactions: StateFlow<List<Transaction>> = dao.getTransactionsByUser(currentUserId)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    fun addTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            dao.insertTransaction(transaction)
+        }
+    }
+
+    fun deleteTransaction(id: Int) {
+        viewModelScope.launch {
+            dao.deleteTransaction(id)
+        }
+    }
+}
