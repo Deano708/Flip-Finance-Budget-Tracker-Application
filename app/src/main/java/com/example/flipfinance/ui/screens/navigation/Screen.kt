@@ -21,4 +21,6 @@ sealed class Screen(val route: String, val title: String? = null, val icon: Imag
     object Streak : Screen("streak", "Streak", Icons.Default.Crop)
     object Settings : Screen("settings", "Settings", Icons.Default.Crop)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
+
+    object AddTransaction : Screen("add_transaction")
 }

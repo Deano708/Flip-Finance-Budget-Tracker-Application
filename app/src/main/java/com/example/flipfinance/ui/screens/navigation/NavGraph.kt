@@ -17,6 +17,7 @@ import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.ui.screens.Auth.ForgotPasswordScreen
 import com.example.flipfinance.ui.screens.Auth.LoginScreen
 import com.example.flipfinance.ui.screens.Auth.RegisterScreen
+import com.example.flipfinance.ui.screens.Transaction.AddTransactionScreen
 import com.example.flipfinance.ui.screens.Transaction.TransactionScreen
 
 /*
@@ -87,6 +88,7 @@ fun NavGraph(
 
             TransactionScreen(
                 viewModel = transactionViewModel,
+                navController = navController,
                 onTransactionClick = { transaction ->
                     // Handle click (e.g., navigate to detail or show a toast)
                     println("Selected: ${transaction.title}")
@@ -110,6 +112,14 @@ fun NavGraph(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Profile Screen")
             }
+        }
+
+        composable(Screen.AddTransaction.route) {
+            val transactionViewModel: TransactionViewModel = hiltViewModel()
+            AddTransactionScreen(
+                viewModel = transactionViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
