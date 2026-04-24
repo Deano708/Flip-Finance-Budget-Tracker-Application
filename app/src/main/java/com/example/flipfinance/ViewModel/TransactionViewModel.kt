@@ -30,7 +30,20 @@ class TransactionViewModel @Inject constructor(
 
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
-            dao.insertTransaction(transaction)
+            // gets the current user from Firebase authentication
+            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            val uid = firebaseUser?.uid ?: ""
+
+            if (uid.isNotEmpty()) {
+                // sets the UID to the transaction
+                val transactionWithId = transaction.copy(userId = uid)
+
+                // Save the transaction to RoomDB
+                dao.insertTransaction(transactionWithId)
+            } else {
+                // throws error if no UserID (shouldnt ever throw this)
+                println("Error: No logged-in user found. Transaction not saved.")
+            }
         }
     }
 
