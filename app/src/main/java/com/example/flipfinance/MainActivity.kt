@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.flipfinance.ViewModel.AuthViewModel
+import com.example.flipfinance.ViewModel.MainViewModel
 import com.example.flipfinance.ui.components.BottomBar
 import com.example.flipfinance.ui.screens.Onboarding.OnboardingScreen
 import com.example.flipfinance.ui.screens.navigation.NavGraph
@@ -39,67 +40,75 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    // DEBUG TOGGLE - Set to true to force onboarding on every app launch
-    private val isDevModeOnboardingActive = true
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            FlipFinanceTheme {
-                // Local State to Track if Onboarding is Currently being shown - TEMRoARY - Only for Dev testing
-                var showOnboarding by remember { mutableStateOf(isDevModeOnboardingActive) }
 
+            val mainViewModel: MainViewModel = hiltViewModel()
+
+            // null = Loading, false = Show Onboarding, true = To Login
+            val hasCompletedOnboarding by mainViewModel.hasCompletedOnboarding.collectAsState()
+
+            FlipFinanceTheme {
                 AnimatedContent(
-                    targetState = showOnboarding,
+                    targetState = hasCompletedOnboarding,
                     transitionSpec = {
                         // Fades the Onboarding out and the App in simultaneously
                         fadeIn(animationSpec = tween(500)) togetherWith
                                 fadeOut(animationSpec = tween(500))
                     },
                     label = "OnboardingTransition"
-                ) { targetShowOnboarding ->
-                    if (targetShowOnboarding) {
-                        OnboardingScreen(onFinished = { showOnboarding = false })
-                    } else {
-                        val navController = rememberNavController()
-                        val navBackStackEntry by navController.currentBackStackEntryAsState()
-                        val currentRoute = navBackStackEntry?.destination?.route
+                ) { completed ->
+                    when (completed) {
 
-                        val authViewModel: AuthViewModel = hiltViewModel()
-                        val currentUser by authViewModel.currentUser.collectAsState(initial = null)
+                        null -> { /* Empty*/ }
 
-                        // Only show BottomBar if not on Auth screens and User is logged in
-                        val authRoutes = listOf(
-                            Screen.Login.route,
-                            Screen.Register.route,
-                            Screen.ForgotPassword.route
-                        )
-                        val ShowBottomBar = currentRoute !in authRoutes && currentUser != null
-
-                        // Handle session logout
-                        LaunchedEffect(currentUser) {
-                            if (currentUser == null && currentRoute !in authRoutes) {
-                                navController.navigate(Screen.Login.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
+                        false -> {
+                            OnboardingScreen(onFinished = { mainViewModel.completeOnboarding() })   // Trigger Save to DataStore Preferences
                         }
 
-                        Scaffold(
-                            bottomBar = {
-                                if (ShowBottomBar) {
-                                    BottomBar(navController = navController)
+                        true -> {
+
+                            val navController = rememberNavController()
+                            val navBackStackEntry by navController.currentBackStackEntryAsState()
+                            val currentRoute = navBackStackEntry?.destination?.route
+
+                            val authViewModel
+                                    : AuthViewModel = hiltViewModel()
+                            val currentUser by authViewModel.currentUser.collectAsState(initial = null)
+
+                            // Only show BottomBar if not on Auth screens and User is logged in
+                            val authRoutes = listOf(
+                                Screen.Login.route,
+                                Screen.Register.route,
+                                Screen.ForgotPassword.route
+                            )
+
+                            val ShowBottomBar = currentRoute !in authRoutes && currentUser != null
+
+                            // Handle session logout
+                            LaunchedEffect(currentUser) {
+                                if (currentUser == null && currentRoute !in authRoutes) {
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
                                 }
                             }
-                        ) { innerPadding ->
-                            NavGraph(
-                                navController = navController,
-                                modifier = Modifier.padding(innerPadding)
-                            )
+
+                            Scaffold(
+                                bottomBar = {
+                                    if (ShowBottomBar) {
+                                        BottomBar(navController = navController)
+                                    }
+                                }
+                            ) { innerPadding ->
+                                NavGraph(
+                                    navController = navController,
+                                    modifier = Modifier.padding(innerPadding)
+                                )
+                            }
                         }
                     }
-
                 }
             }
         }
