@@ -12,13 +12,13 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 - **Self-Service Password Recovery**: Integrated "Forgot Password" flow utilizing Firebase's secure email reset system.
 
 ### Input Validation & UX
-- **Context-Aware Error Handling**: Field-level validation that guides users with specific messages (e.g., "Invalid email format" or "Password too short").
+- **Context-Aware Error Handling**: Field-level validation that guides users with specific messages.
 - **Reactive UI**: Error states clear automatically as the user begins typing, providing immediate positive feedback.
 - **Server-Side Feedback**: Technical Firebase exceptions are mapped to human-readable strings for a smoother user experience.
 
 ### Navigation & Architecture
 - **Multi-Screen Navigation**: Implemented using **Jetpack Compose Navigation** with a centralized `NavGraph`.
-- **Bottom Navigation System**: A modern, Material 3-compliant bottom bar allowing seamless transitions between Expenses, Goals, and Profile.
+- **Bottom Navigation System**: A modern, Material 3-compliant bottom bar allowing seamless transitions between Home, Transactions, Streak, Settings and Profile.
 - **Conditional UI**: The bottom navigation is context-aware, hiding itself during the authentication flow and only appearing once a user is verified.
 
 ---
