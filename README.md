@@ -10,15 +10,16 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 - **Secure Onboarding**: Login and Registration flows with real-time input validation.
 - **Identity Management**: Powered by **Firebase Authentication** for secure email/password sign-in.
 - **Self-Service Password Recovery**: Integrated "Forgot Password" flow utilizing Firebase's secure email reset system.
+- **First-Launch Experience**: A high-fidelity, 3-screen interactive onboarding pager designed to introduce core value propositions.
 
 ### Input Validation & UX
-- **Context-Aware Error Handling**: Field-level validation that guides users with specific messages.
+- **Context-Aware Error Handling**: Field-level validation that guides users with specific messages (e.g., "Invalid email format" or "Password too short").
 - **Reactive UI**: Error states clear automatically as the user begins typing, providing immediate positive feedback.
 - **Server-Side Feedback**: Technical Firebase exceptions are mapped to human-readable strings for a smoother user experience.
 
 ### Navigation & Architecture
 - **Multi-Screen Navigation**: Implemented using **Jetpack Compose Navigation** with a centralized `NavGraph`.
-- **Bottom Navigation System**: A modern, Material 3-compliant bottom bar allowing seamless transitions between Home, Transactions, Streak, Settings and Profile.
+- **Bottom Navigation System**: A modern, Material 3-compliant bottom bar allowing seamless transitions between Expenses, Goals, and Profile.
 - **Conditional UI**: The bottom navigation is context-aware, hiding itself during the authentication flow and only appearing once a user is verified.
 
 ---
@@ -28,9 +29,10 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 The application is built following **Clean Architecture** and **MVVM (Model-View-ViewModel)** patterns to ensure the codebase remains maintainable and testable as it scales.
 
 ### Layered Separation
-- **Presentation Layer**: Built 100% in **Jetpack Compose**. Uses **Hilt** for ViewModel injection and captures UI state using `StateFlow`.
+- **UI Layer**: Built 100% in **Jetpack Compose**. Uses **Hilt** for ViewModel injection and captures UI state using `StateFlow`.
 - **Domain Layer**: Contains the core business logic, including the `AuthRepository` interface and use-case-specific models like the `User` entity.
 - **Data Layer**: Handles data sourcing. Currently implements `FirebaseAuthRepository` to communicate with the Firebase SDK.
+- **Preferences Layer** Uses `UserPreferences` for local Offline settings.
 
 ---
 
@@ -50,6 +52,7 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 | **UI Framework** | Jetpack Compose (Material 3) |
 | **Dependency Injection** | Hilt (Dagger) |
 | **Authentication** | Firebase Auth |
+| **Persistence** | Jetpack DataStore (Preferences) |
 | **Architecture** | Clean Architecture + MVVM |
 | **Asynchronous Logic** | Kotlin Coroutines & Flow |
 | **Navigation** | Compose Navigation Component |
@@ -64,8 +67,9 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 - **AppModule**: Provides Hilt bindings for `FirebaseAuth` and the repository implementation.
 
 ### Navigation Routing
-- **MainActivity**: Acts as the single entry point, observing the `currentUser` flow to route users between the **Auth Module** and the **Main App Module**.
+- **MainActivity**: Acts as the single entry point, observing both `currentUser` and `hasCompletedOnboarding` states to determine the UI entry point.
 - **Screen**: A sealed class hierarchy defining routes, titles, and icons for type-safe navigation.
+- **Persistent Preferences**: Leverages **Jetpack DataStore** to ensure the onboarding experience is only displayed on the first launch or until successfully completed.
 
 ---
 
@@ -87,7 +91,9 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 
 - [x] Project Structure & Clean Architecture Setup.
 - [x] Design System (Theme, Type, Shapes).
+- [x] Adaptive Icon & Branding Implementation.
 - [x] Firebase Authentication Integration.
+- [x] Persistent Onboarding with Jetpack DataStore.
 - [x] Bottom Navigation & Global Routing.
 - [ ] **Next**: RoomDB implementation for local expense persistence.
 - [ ] **Next**: Supabase integration for receipt image storage.
