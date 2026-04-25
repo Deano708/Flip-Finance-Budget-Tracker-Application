@@ -28,6 +28,15 @@ import com.example.flipfinance.ui.screens.navigation.Screen
 import com.example.flipfinance.ui.theme.FlipFinanceTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+/*
+   Title: Create an Intro/Onboarding Screen with Jetpack Compose | Kotlin | Tranquilly Coding
+   Author: Tranquilly Coding
+   Date: 1 years ago
+   Date accessed: 25/04/2026
+   Code version : 1
+   Availability: https://youtu.be/AtNCGtMjavk?si=a_H9Vw6HTCQE-brD
+*/
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
