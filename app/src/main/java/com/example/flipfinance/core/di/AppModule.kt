@@ -1,13 +1,17 @@
 package com.example.flipfinance.core.di
 
 import com.example.flipfinance.data.remote.FirebaseAuthRepository
+import com.example.flipfinance.data.remote.FirebaseProfileRepository
 import com.example.flipfinance.domain.repository.AuthRepository
+import com.example.flipfinance.domain.repository.ProfileRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Singleton
 
 /*
@@ -42,4 +46,15 @@ object AppModule {
     fun provideAuthRepository(fbAuth: FirebaseAuth): AuthRepository =
         FirebaseAuthRepository(fbAuth)
 
+    @Provides
+    @Singleton
+    fun provideFirebaseDatabase(): FirebaseDatabase = FirebaseDatabase.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideProfileRepository(
+        firebaseAuth: FirebaseAuth,
+        firebaseDatabase: FirebaseDatabase,
+        @ApplicationContext context: Context
+    ): ProfileRepository = FirebaseProfileRepository(firebaseAuth, firebaseDatabase, context)
 }
