@@ -81,7 +81,7 @@ fun TransactionScreen(
                         }
                     )
                 }
-                
+
             }
             // The Bottom Sheet
             if (showSheet && selectedTransaction != null) {
