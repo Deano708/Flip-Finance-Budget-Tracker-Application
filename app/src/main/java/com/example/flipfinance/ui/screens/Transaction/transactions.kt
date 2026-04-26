@@ -1,5 +1,6 @@
 package com.example.flipfinance.ui.screens.Transaction
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,12 +16,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.components.TransactionItem
 import com.example.flipfinance.ui.components.transactions.TransactionDetailsSheet
+import com.example.flipfinance.ui.components.transactions.TransactionFilterRow
+import com.example.flipfinance.ui.components.transactions.formatTransactionDate
 import com.example.flipfinance.ui.screens.navigation.Screen
 
 /*
@@ -63,7 +68,43 @@ import com.example.flipfinance.ui.screens.navigation.Screen
    Availability: https://developer.android.com/develop/ui/compose/components/bottom-sheets
 */
 
-@OptIn(ExperimentalMaterial3Api::class)
+/*
+   Title: Rows, Columns & Basic Sizing - Android Jetpack Compose - Part 2
+   Author: Phillip Lackner
+   Date: 5 years ago
+   Date accessed: 26/04/2026
+   Code version : 1
+   Availability: https://youtu.be/rHKeRWK3zL4?si=BIcdBEid7DIozjYu
+*/
+
+/*
+   Title: Modifiers - Android Jetpack Compose - Part 3
+   Author: Phillip Lackner
+   Date: 5 years ago
+   Date accessed: 26/04/2026
+   Code version : 1
+   Availability: https://youtu.be/XCuC_p3E0qo?si=e-mzwWJ2Dx5MDG5W
+*/
+
+/*
+   Title: Textfields, Buttons & Showing Snackbars - Android Jetpack Compose - Part 7
+   Author: Phillip Lackner
+   Date: 5 years ago
+   Date accessed: 26/04/2026
+   Code version : 1
+   Availability: https://youtu.be/_yON9d9if6g?si=SzA1f3U4XmFhxOUw
+*/
+
+/*
+   Title: State - Android Jetpack Compose - Part 6
+   Author: Phillip Lackner
+   Date: 5 years ago
+   Date accessed: 26/04/2026
+   Code version : 1
+   Availability: https://youtu.be/s3m1PSd7VWc?si=W9D10o-CFGRSg9Ex
+*/
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TransactionScreen(
     viewModel: TransactionViewModel,
@@ -72,77 +113,127 @@ fun TransactionScreen(
 ) {
     val transactionList by viewModel.transactions.collectAsState()
 
+    // Filter State
+    var selectedFilter by remember { mutableStateOf("All") }
+
+    // Logic to Filter the Transactions based on Selection
+    val filteredTransactions = remember(transactionList, selectedFilter) {
+        transactionList.filter { transaction ->
+            when {
+                selectedFilter.equals("All", ignoreCase = true) -> true
+                selectedFilter.equals("Expense", ignoreCase = true) ||
+                        selectedFilter.equals("Income", ignoreCase = true) -> {
+                    transaction.expenseType.equals(selectedFilter, ignoreCase = true)
+                }
+                else -> {
+                    transaction.expenseCategory.equals(selectedFilter, ignoreCase = true)
+                }
+            }
+        }
+    }
+
     // for the bottom sheet
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
+    // Transaction List
+    val groupedTransactions = filteredTransactions.groupBy { formatTransactionDate(it.date) }
+
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = {
-                    Text("My Transactions", style = MaterialTheme.typography.titleLarge)
-                }
+                    Text(
+                        text = "My Transactions",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = Color.Black
+                ),
+                // Ensures the top bar sits flush at the very top of the Screen
+                windowInsets = WindowInsets.statusBars
             )
         },
         floatingActionButton = {
-            // This button navigates to your new Add Transaction screen
+            // This button navigates to the Add Transaction Bottom Sheet
             FloatingActionButton(
                 onClick = { navController.navigate(Screen.AddTransaction.route) },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.background
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Transaction")
             }
         }
     ) { padding ->
-        if (transactionList.isEmpty()) {
-            // Feedback for when the database is empty
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No transactions yet. Tap '+' to start!", color = MaterialTheme.colorScheme.outline)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                items(transactionList) { transaction ->
-                    TransactionItem(
-                        transaction = transaction,
-                        onClick = {
-                            selectedTransaction = transaction
-                            showSheet = true
-                        }
-                    )
-                }
+        Column(modifier = Modifier.padding(padding)) {
 
-            }
-            // The Bottom Sheet
-            if (showSheet && selectedTransaction != null) {
-                ModalBottomSheet(
-                    onDismissRequest = { showSheet = false },
-                    sheetState = sheetState,
-                    containerColor = Color.White,
-                    dragHandle = { BottomSheetDefaults.DragHandle() }
-                ) {
-                    TransactionDetailsSheet(
-                        transaction = selectedTransaction!!,
-                        onDelete = {
-                            viewModel.deleteTransaction(selectedTransaction!!.transactionId)
-                            showSheet = false
-                        },
-                        onEdit = { updatedTransaction ->
-                            viewModel.addTransaction(updatedTransaction,null) // Room uses @Insert(onConflict = REPLACE)
-                            showSheet = false
-                        }
+            // Filter Row
+            TransactionFilterRow(
+                selectedFilter = selectedFilter,
+                onFilterSelected = { selectedFilter = it }
+            )
+
+            if (filteredTransactions.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (transactionList.isEmpty()) "No transactions Yet" else "No matches Found",
+                        color = Color.Gray
                     )
                 }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    groupedTransactions.forEach { (date, transactions) ->
+                        stickyHeader {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.background
+                            ) {
+                                Text(
+                                    text = date,
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        items(transactions) { transaction ->
+                            TransactionItem(
+                                transaction = transaction,
+                                onClick = {
+                                    selectedTransaction = transaction
+                                    showSheet = true
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        // The Bottom Sheet
+        if (showSheet && selectedTransaction != null) {
+            ModalBottomSheet(
+                onDismissRequest = { showSheet = false },
+                sheetState = sheetState,
+                containerColor = Color.White,
+                dragHandle = { BottomSheetDefaults.DragHandle() }
+            ) {
+                TransactionDetailsSheet(
+                    transaction = selectedTransaction!!,
+                    onDelete = {
+                        viewModel.deleteTransaction(selectedTransaction!!.transactionId)
+                        showSheet = false
+                    },
+                    onEdit = { updatedTransaction ->
+                        viewModel.addTransaction(updatedTransaction,null) // Room uses @Insert(onConflict = REPLACE)
+                        showSheet = false
+                    }
+                )
             }
         }
     }
