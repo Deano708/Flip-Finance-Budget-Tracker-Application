@@ -19,6 +19,45 @@ import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
 import androidx.lifecycle.viewModelScope
 
+/*
+   Title: Save data in a local database using Room
+   Author: Android Developers
+   Date: 5 March 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/training/data-storage/room
+*/
+
+/*
+   Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
+   Author: Philipp Lackner (YouTube)
+   Date: 15 March 2023
+   Date accessed: 24/04/2026
+   Availability: https://www.youtube.com/watch?v=bOd3wO0uFr8
+*/
+
+/*
+   Title: Use Supabase with Android Kotlin
+   Author: Supabase
+   Date: 26 April 2026
+   Date accessed: 26/04/2026
+   Availability: https://supabase.com/docs/guides/getting-started/quickstarts/kotlin
+*/
+
+/*
+   Title: Storage | Supabase | Jetpack Compose | Tutorial | 2023
+   Author: YoursSohail
+   Date: 23 October 2023
+   Date accessed: 26/04/2026
+   Availability: https://www.youtube.com/watch?v=BqxI7ViS_-M
+*/
+
+/*
+   Title:Dependency injection with Hilt
+   Author: Android Developers
+   Date: 22 April 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/training/dependency-injection/hilt-android
+*/
 
 
 

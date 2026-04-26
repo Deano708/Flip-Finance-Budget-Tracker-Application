@@ -8,6 +8,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.flipfinance.data.local.Entities.Transaction
 
+/*
+   Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
+   Author: Philipp Lackner (YouTube)
+   Date: 15 March 2023
+   Date accessed: 24/04/2026
+   Availability: https://www.youtube.com/watch?v=bOd3wO0uFr8
+*/
+
+/*
+   Title: Save data in a local database using Room
+   Author: Android Developers
+   Date: 5 March 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/training/data-storage/room
+*/
+
+/*
+   Title: Card
+   Author: Android Developers
+   Date: 24 April 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/develop/ui/compose/components/card
+*/
+
 @Composable
 fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
     Card(
@@ -16,6 +40,7 @@ fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
             .padding(8.dp)
             .clickable { onClick() }
     ) {
+        // Column to allow users to input their data.
         Column(modifier = Modifier.padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(text = transaction.title, style = MaterialTheme.typography.titleLarge)

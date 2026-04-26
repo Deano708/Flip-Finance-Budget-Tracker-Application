@@ -6,6 +6,23 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.flipfinance.data.local.Entities.Transaction
 
+/*
+   Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
+   Author: Philipp Lackner (YouTube)
+   Date: 15 March 2023
+   Date accessed: 24/04/2026
+   Availability: https://www.youtube.com/watch?v=bOd3wO0uFr8
+*/
+
+/*
+   Title: Save data in a local database using Room
+   Author: Android Developers
+   Date: 5 March 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/training/data-storage/room
+*/
+
+// instantiates the database so it can be used througout the app.
 @Database(entities = [Transaction::class], version = 1, exportSchema = false)
 abstract class FlipFinanceDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao

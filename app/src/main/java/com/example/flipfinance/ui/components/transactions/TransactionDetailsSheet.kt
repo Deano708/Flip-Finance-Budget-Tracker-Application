@@ -21,8 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -37,6 +35,62 @@ import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+/*
+   Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
+   Author: Philipp Lackner (YouTube)
+   Date: 15 March 2023
+   Date accessed: 24/04/2026
+   Availability: https://www.youtube.com/watch?v=bOd3wO0uFr8
+*/
+
+/*
+   Title: Save data in a local database using Room
+   Author: Android Developers
+   Date: 5 March 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/training/data-storage/room
+*/
+
+/*
+   Title: Accessing data using Room DAOs
+   Author: Android Developers
+   Date: 5 March 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/training/data-storage/room/accessing-data
+*/
+
+/*
+   Title: Use Supabase with Android Kotlin
+   Author: Supabase
+   Date: 26 April 2026
+   Date accessed: 26/04/2026
+   Availability: https://supabase.com/docs/guides/getting-started/quickstarts/kotlin
+*/
+
+/*
+   Title: Storage | Supabase | Jetpack Compose | Tutorial | 2023
+   Author: YoursSohail
+   Date: 23 October 2023
+   Date accessed: 26/04/2026
+   Availability: https://www.youtube.com/watch?v=BqxI7ViS_-M
+*/
+
+/*
+   Title: Card
+   Author: Android Developers
+   Date: 24 April 2026
+   Date accessed: 24/04/2026
+   Availability: https://developer.android.com/develop/ui/compose/components/card
+*/
+
+/*
+   Title: how can i make use of jetpack compose to make a dropdown of options from a database
+   Author: Microsoft Copilot
+   Date: 26 April 2026
+   Code Version: 1
+   Availability: https://copilot.microsoft.com/shares/4kNf4Zpv4nXXgkE23uoCJ
+*/
 
 
 @Composable
@@ -105,7 +159,7 @@ fun TransactionDetailsSheet(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Category Row
+        // Category to allow the user to pick transaction category
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = transaction.expenseCategory,
@@ -144,7 +198,7 @@ fun TransactionDetailsSheet(
                 modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
             )
 
-            // Preview Image using Coil
+            // Preview Image from supabase
             AsyncImage(
                 model = transaction.receiptUrl,
                 contentDescription = "Transaction Receipt",
@@ -201,6 +255,8 @@ fun TransactionDetailsSheet(
         }
     }
 }
+
+// Methods to set the time stamp in the details page to the time that the transaction was logged
 fun formatTransactionDate(timestamp: Long): String {
     val date = Date(timestamp)
     val format = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())

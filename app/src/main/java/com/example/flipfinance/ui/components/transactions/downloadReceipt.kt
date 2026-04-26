@@ -6,6 +6,24 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 
+/*
+   Title: Use Supabase with Android Kotlin
+   Author: Supabase
+   Date: 26 April 2026
+   Date accessed: 26/04/2026
+   Availability: https://supabase.com/docs/guides/getting-started/quickstarts/kotlin
+*/
+
+/*
+   Title: Storage | Supabase | Jetpack Compose | Tutorial | 2023
+   Author: YoursSohail
+   Date: 23 October 2023
+   Date accessed: 26/04/2026
+   Availability: https://www.youtube.com/watch?v=BqxI7ViS_-M
+*/
+
+
+
 fun downloadReceipt(context: Context, url: String, title: String) {
     try {
         val request = DownloadManager.Request(Uri.parse(url))
