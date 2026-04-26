@@ -1,5 +1,6 @@
 package com.example.flipfinance.ui.components.transactions
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,7 +16,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.MaterialTheme
@@ -24,8 +27,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 
 
 @Composable
@@ -38,12 +43,17 @@ fun TransactionDetailsSheet(
     var title by remember { mutableStateOf(transaction.title) }
     var amount by remember { mutableStateOf(transaction.amount.toString()) }
     var description by remember { mutableStateOf(transaction.description) }
+    var showReceipt by remember { mutableStateOf(false) }
+    var showFullImage by remember { mutableStateOf(false) }
+
+
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(24.dp)
-            .navigationBarsPadding(),
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // expense and income Badge (at the top of the page)
@@ -119,6 +129,29 @@ fun TransactionDetailsSheet(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        // Receipt Section
+        if (!transaction.receiptUrl.isNullOrEmpty()) {
+            Text(
+                text = "Attached Receipt",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+            )
+
+            // Preview Image using Coil
+            AsyncImage(
+                model = transaction.receiptUrl,
+                contentDescription = "Transaction Receipt",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp) // Set a fixed height for the preview
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Action Buttons
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {

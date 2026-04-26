@@ -73,14 +73,16 @@ fun AddTransactionScreen(
                     if (title.isNotBlank() && amount.isNotBlank()) {
                         viewModel.addTransaction(
                             Transaction(
-                                userId = "", // Handled by ViewModel (Firbase auth)
+                                userId = "", // Handled by ViewModel
                                 title = title,
                                 amount = amount.toDoubleOrNull() ?: 0.0,
                                 date = System.currentTimeMillis(),
                                 expenseCategory = selectedCategory,
                                 expenseType = selectedType,
-                                description = notes
-                            )
+                                description = notes,
+                                receiptUrl = null // This will be updated after upload
+                            ),
+                            imageUri = selectedImageUri // Pass the URI here!
                         )
                         onNavigateBack()
                     }

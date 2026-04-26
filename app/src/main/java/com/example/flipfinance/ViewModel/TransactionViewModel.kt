@@ -1,5 +1,8 @@
 package com.example.flipfinance.ViewModel
 
+import android.content.Context
+import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -11,18 +14,22 @@ import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.data.local.util.TransactionDao
 import com.example.flipfinance.data.remote.supabase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
+import androidx.lifecycle.viewModelScope
+
+
 
 
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
-    private val dao: TransactionDao)
-    : ViewModel() {
+    private val dao: TransactionDao,
+    @ApplicationContext private val context: Context // Hilt provides this automatically
+) : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-    // Automatically updates the UI list when the database changes
     val transactions: StateFlow<List<Transaction>> = dao.getTransactionsByUser(currentUserId)
         .stateIn(
             scope = viewModelScope,
@@ -30,23 +37,40 @@ class TransactionViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    fun addTransaction(transaction: Transaction) {
+    fun addTransaction(transaction: Transaction, imageUri: Uri?) {
         viewModelScope.launch {
-            // gets the current user from Firebase authentication
-            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            val uid = firebaseUser?.uid ?: ""
+            var finalImageUrl: String? = null
 
-            if (uid.isNotEmpty()) {
-                // sets the UID to the transaction
-                val transactionWithId = transaction.copy(userId = uid)
+            imageUri?.let { uri ->
+                // Use NonCancellable so the upload finishes even if the UI closes
+                try {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val bytes = inputStream?.readBytes()
 
-                // Save the transaction to RoomDB
-                dao.insertTransaction(transactionWithId)
-            } else {
-                // throws error if no UserID (shouldnt ever throw this)
-                println("Error: No logged-in user found. Transaction not saved.")
+                    if (bytes != null) {
+                        val fileName = "receipt_${System.currentTimeMillis()}.jpg"
+                        val bucket = supabase.storage.from("RecieptStorage")
+
+                        // Perform upload in a context that won't be killed mid-way
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
+                            bucket.upload("receipts/$fileName", bytes)
+                            finalImageUrl = bucket.publicUrl("receipts/$fileName")
+                        }
+                        Log.d("UploadSuccess", "Generated URL: $finalImageUrl")
+                    }
+                } catch (e: Exception) {
+                    Log.e("UploadError", "Failed to upload: ${e.message}")
+                }
             }
+
+            val transactionToSave = transaction.copy(
+                userId = currentUserId,
+                receiptUrl = finalImageUrl
+            )
+
+            dao.insertTransaction(transactionToSave)
         }
+
     }
 
     fun deleteTransaction(id: Int) {
@@ -54,20 +78,5 @@ class TransactionViewModel @Inject constructor(
             dao.deleteTransaction(id)
         }
     }
-    // method to handle the uplaod of images to supabase (getting and fetching URLS)
-    fun uploadReceiptAndSave(transaction: Transaction, imageBytes: ByteArray?, fileName: String) {
-        viewModelScope.launch {
-            var finalUrl: String? = null
-
-            if (imageBytes != null) {
-                // 1. Upload to Supabase Storage
-                val bucket = supabase.storage.from("RecieptStorage")
-                bucket.upload(path = "$fileName.jpg", data = imageBytes)
-                finalUrl = bucket.publicUrl("$fileName.jpg")
-            }
-
-            // 2. Save to Room (with or without the URL)
-            dao.insertTransaction(transaction.copy(receiptUrl = finalUrl))
-        }
-    }
 }
+

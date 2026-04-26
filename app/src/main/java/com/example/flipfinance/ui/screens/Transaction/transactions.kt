@@ -98,7 +98,7 @@ fun TransactionScreen(
                             showSheet = false
                         },
                         onEdit = { updatedTransaction ->
-                            viewModel.addTransaction(updatedTransaction) // Room uses @Insert(onConflict = REPLACE)
+                            viewModel.addTransaction(updatedTransaction,null) // Room uses @Insert(onConflict = REPLACE)
                             showSheet = false
                         }
                     )

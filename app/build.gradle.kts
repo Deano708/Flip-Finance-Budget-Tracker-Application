@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Navigation & Icons
     implementation(libs.androidx.navigation.compose)
@@ -95,12 +96,20 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    //Supabase
+    // Supabase (Stay with 3.0.3)
     implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
-    implementation("io.ktor:ktor-client-android:2.3.12")
-    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Update Ktor to 3.0.0 or later to match Supabase BOM 3.0.3
+    val ktor_version = "3.0.0"
+    implementation("io.ktor:ktor-client-android:$ktor_version")
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-plugins:$ktor_version")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
+
+    // Add this specifically if you are doing JSON serialization with Supabase
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
 }
 configurations.all {
     resolutionStrategy {
