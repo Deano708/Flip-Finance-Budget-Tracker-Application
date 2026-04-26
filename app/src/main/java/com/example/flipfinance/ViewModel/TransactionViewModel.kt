@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.data.local.util.TransactionDao
+import com.example.flipfinance.data.remote.supabase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
 
 
@@ -50,6 +52,22 @@ class TransactionViewModel @Inject constructor(
     fun deleteTransaction(id: Int) {
         viewModelScope.launch {
             dao.deleteTransaction(id)
+        }
+    }
+    // method to handle the uplaod of images to supabase (getting and fetching URLS)
+    fun uploadReceiptAndSave(transaction: Transaction, imageBytes: ByteArray?, fileName: String) {
+        viewModelScope.launch {
+            var finalUrl: String? = null
+
+            if (imageBytes != null) {
+                // 1. Upload to Supabase Storage
+                val bucket = supabase.storage.from("RecieptStorage")
+                bucket.upload(path = "$fileName.jpg", data = imageBytes)
+                finalUrl = bucket.publicUrl("$fileName.jpg")
+            }
+
+            // 2. Save to Room (with or without the URL)
+            dao.insertTransaction(transaction.copy(receiptUrl = finalUrl))
         }
     }
 }
