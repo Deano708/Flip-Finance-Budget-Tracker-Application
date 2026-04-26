@@ -25,6 +25,7 @@ import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.components.TransactionItem
 import com.example.flipfinance.ui.components.transactions.TransactionDetailsSheet
 import com.example.flipfinance.ui.components.transactions.TransactionFilterRow
+import com.example.flipfinance.ui.components.transactions.TransactionSearchBar
 import com.example.flipfinance.ui.components.transactions.formatTransactionDate
 import com.example.flipfinance.ui.screens.navigation.Screen
 
@@ -116,19 +117,27 @@ fun TransactionScreen(
     // Filter State
     var selectedFilter by remember { mutableStateOf("All") }
 
+    // State for Search
+    var searchQuery by remember { mutableStateOf("") }
+
     // Logic to Filter the Transactions based on Selection
-    val filteredTransactions = remember(transactionList, selectedFilter) {
+    val filteredTransactions = remember(transactionList, selectedFilter, searchQuery) {
         transactionList.filter { transaction ->
-            when {
+
+            val matchesFilter = when {
                 selectedFilter.equals("All", ignoreCase = true) -> true
                 selectedFilter.equals("Expense", ignoreCase = true) ||
                         selectedFilter.equals("Income", ignoreCase = true) -> {
                     transaction.expenseType.equals(selectedFilter, ignoreCase = true)
                 }
-                else -> {
-                    transaction.expenseCategory.equals(selectedFilter, ignoreCase = true)
-                }
+                else -> transaction.expenseCategory.equals(selectedFilter, ignoreCase = true)
             }
+
+            // Check Search Query - (Title or Description)
+            val matchesSearch = transaction.title.contains(searchQuery, ignoreCase = true) ||
+                    transaction.description.contains(searchQuery, ignoreCase = true)
+
+            matchesFilter && matchesSearch
         }
     }
 
@@ -171,6 +180,12 @@ fun TransactionScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
+
+            // Search Bar
+            TransactionSearchBar(
+                query = searchQuery,
+                onQueryChanged = { searchQuery = it }
+            )
 
             // Filter Row
             TransactionFilterRow(
