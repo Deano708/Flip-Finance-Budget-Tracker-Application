@@ -17,6 +17,7 @@ import com.example.flipfinance.ViewModel.AuthViewModel
 import com.example.flipfinance.ui.screens.Auth.ForgotPasswordScreen
 import com.example.flipfinance.ui.screens.Auth.LoginScreen
 import com.example.flipfinance.ui.screens.Auth.RegisterScreen
+import com.example.flipfinance.ui.screens.Profile.ProfileScreen
 
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
@@ -99,9 +100,19 @@ fun NavGraph(
         }
 
         composable(Screen.Profile.route) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Profile Screen")
-            }
+            ProfileScreen(
+                onNavigateToChangeCredentials = { navController.navigate(Screen.ChangeCredentials.route) },
+                onDeleteAccount = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
