@@ -1,4 +1,9 @@
 package com.example.flipfinance.domain.model
 
-class UserProfile {
-}
+data class UserProfile(
+    val uid: String = "",
+    val firstName: String = "",
+    val lastName: String = "",
+    val email: String = "",
+    val photoUrl: String? = null
+)
