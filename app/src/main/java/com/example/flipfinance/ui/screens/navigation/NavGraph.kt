@@ -19,6 +19,7 @@ import com.example.flipfinance.ui.screens.Auth.LoginScreen
 import com.example.flipfinance.ui.screens.Auth.RegisterScreen
 import com.example.flipfinance.ui.screens.Transaction.AddTransactionScreen
 import com.example.flipfinance.ui.screens.Transaction.TransactionScreen
+import com.example.flipfinance.ui.screens.Settings.SettingsScreen
 
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
@@ -103,9 +104,7 @@ fun NavGraph(
         }
 
         composable(Screen.Settings.route) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Settings Screen")
-            }
+            SettingsScreen()
         }
 
         composable(Screen.Profile.route) {
