@@ -1,4 +1,4 @@
-package com.example.flipfinance.ui.components
+package com.example.flipfinance.ui.components.transactions
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

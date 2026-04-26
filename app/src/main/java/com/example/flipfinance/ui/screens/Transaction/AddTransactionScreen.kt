@@ -34,8 +34,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.Entities.Transaction
-import com.example.flipfinance.ui.components.CategoryDropdown
-import com.example.flipfinance.ui.components.TransactionTypeToggle
+import com.example.flipfinance.ui.components.transactions.CategoryDropdown
+import com.example.flipfinance.ui.components.transactions.TransactionTypeToggle
 
 
 @Composable
