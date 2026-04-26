@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,14 +26,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.flipfinance.ViewModel.ProfileEvent
 import com.example.flipfinance.ViewModel.ProfileViewModel
 import com.example.flipfinance.ui.theme.ErrorRed
-import androidx.compose.foundation.Image
+import java.io.File
 
 @Composable
 fun ProfileScreen(
@@ -41,6 +45,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val userProfile by viewModel.userProfile.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
     val uploadError by viewModel.uploadError.collectAsState()
@@ -49,6 +54,9 @@ fun ProfileScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+    // Holds the Uri of the temp file we create for the camera to write into
+    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
+
     // Gallery picker launcher
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -56,24 +64,27 @@ fun ProfileScreen(
         uri?.let { viewModel.onEvent(ProfileEvent.UploadPhoto(it)) }
     }
 
-    // Camera launcher — captures to a Uri, then uploads
+    // Camera launcher — writes full-resolution photo to our temp file Uri
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        // TakePicturePreview returns a Bitmap thumbnail — good enough for a profile photo
-        // We write it to a temp file then pass the Uri to the ViewModel
-        bitmap?.let {
-            // Convert bitmap back to Uri via cache file
-            val stream = java.io.ByteArrayOutputStream()
-            it.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, stream)
-            val byteArray = stream.toByteArray()
-            // We pass a synthetic Uri using FileProvider pattern —
-            // for simplicity here we re-encode directly via a temp file approach
-            // This is handled inside the ViewModel's compressAndEncodeImage
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            // The camera wrote to cameraImageUri — pass it to the ViewModel
+            cameraImageUri?.let { viewModel.onEvent(ProfileEvent.UploadPhoto(it)) }
         }
     }
 
-    // Snackbar for upload feedback
+    // Creates a temp file in cache/camera/ and returns a FileProvider Uri for it
+    fun createCameraUri(): Uri {
+        val cameraDir = File(context.cacheDir, "camera").apply { mkdirs() }
+        val photoFile = File.createTempFile("photo_", ".jpg", cameraDir)
+        return FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            photoFile
+        )
+    }
+
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uploadError) {
         uploadError?.let {
@@ -143,7 +154,7 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState())
         ) {
 
-            // ── Header ──────────────────────────────────────────────────
+            // ── Header ───────────────────────────────────────────────────
             Surface(
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 1.dp
@@ -162,11 +173,10 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    // ── Avatar ──────────────────────────────────────────
+                    // ── Avatar ───────────────────────────────────────────
                     Box(contentAlignment = Alignment.Center) {
                         val photoUrl = userProfile?.photoUrl
                         if (photoUrl != null) {
-                            // Decode Base64 string back to bitmap and display
                             val imageBytes = Base64.decode(photoUrl, Base64.DEFAULT)
                             val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                             Image(
@@ -178,7 +188,6 @@ fun ProfileScreen(
                                     .clip(CircleShape)
                             )
                         } else {
-                            // Initials fallback
                             val initials = buildString {
                                 userProfile?.firstName?.firstOrNull()?.let { append(it.uppercaseChar()) }
                                 userProfile?.lastName?.firstOrNull()?.let { append(it.uppercaseChar()) }
@@ -199,7 +208,6 @@ fun ProfileScreen(
                             }
                         }
 
-                        // Uploading indicator overlay
                         if (isUploading) {
                             Box(
                                 modifier = Modifier
@@ -228,9 +236,13 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Take photo button
+                        // Take photo — opens camera via FileProvider Uri
                         OutlinedButton(
-                            onClick = { galleryLauncher.launch("image/*") },
+                            onClick = {
+                                val uri = createCameraUri()
+                                cameraImageUri = uri
+                                cameraLauncher.launch(uri)
+                            },
                             modifier = Modifier.weight(1f),
                             shape = MaterialTheme.shapes.small,
                             enabled = !isUploading
@@ -244,7 +256,7 @@ fun ProfileScreen(
                             Text("Take Photo", fontSize = 13.sp)
                         }
 
-                        // Upload photo button
+                        // Upload photo — opens gallery
                         OutlinedButton(
                             onClick = { galleryLauncher.launch("image/*") },
                             modifier = Modifier.weight(1f),
@@ -300,23 +312,23 @@ fun ProfileScreen(
             ) {
                 ActionRow(
                     label = "Change Credentials",
-                    iconTint = MaterialTheme.colorScheme.primary,
                     icon = Icons.Default.Lock,
+                    iconTint = MaterialTheme.colorScheme.primary,
                     onClick = onNavigateToChangeCredentials
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 ActionRow(
                     label = "Delete Account",
+                    icon = Icons.Default.Delete,
                     iconTint = ErrorRed,
                     labelColor = ErrorRed,
-                    icon = Icons.Default.Delete,
                     onClick = { showDeleteDialog = true }
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 ActionRow(
                     label = "Log Out",
-                    iconTint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     icon = Icons.Default.Logout,
+                    iconTint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     onClick = { showLogoutDialog = true }
                 )
             }
@@ -326,7 +338,7 @@ fun ProfileScreen(
     }
 }
 
-// ── Reusable Composables ─────────────────────────────────────────────────────
+// ── Reusable Composables ──────────────────────────────────────────────────────
 
 @Composable
 private fun SectionLabel(text: String) {
