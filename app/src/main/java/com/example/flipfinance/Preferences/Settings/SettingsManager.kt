@@ -4,8 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.flipfinance.domain.repository.AuthRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,7 +21,7 @@ import javax.inject.Singleton
    Availability: https://developer.android.com/topic/libraries/architecture/datastore
 */
 
-// Extension property to create DataStore, renamed to avoid potential conflicts
+// Extension property to create DataStore
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings_prefs")
 
 enum class SupportedCurrency(val symbol: String, val displayName: String) {
@@ -29,56 +33,72 @@ enum class SupportedCurrency(val symbol: String, val displayName: String) {
 
 @Singleton
 class SettingsRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val authRepository: AuthRepository // Inject AuthRepository to observe the current user
 ) {
 
-    private object PreferencesKeys {
-        val DARK_MODE = booleanPreferencesKey("dark_mode")
-        val BUDGET_ALERTS = booleanPreferencesKey("budget_alerts")
-        val CURRENCY = stringPreferencesKey("currency")
-        val MIN_BUDGET = stringPreferencesKey("min_budget")
-        val MAX_BUDGET = stringPreferencesKey("max_budget")
+    // Dynamically generate keys based on the user's UID
+    private fun darkModeKey(uid: String) = booleanPreferencesKey("dark_mode_$uid")
+    private fun budgetAlertsKey(uid: String) = booleanPreferencesKey("budget_alerts_$uid")
+    private fun currencyKey(uid: String) = stringPreferencesKey("currency_$uid")
+    private fun minBudgetKey(uid: String) = stringPreferencesKey("min_budget_$uid")
+    private fun maxBudgetKey(uid: String) = stringPreferencesKey("max_budget_$uid")
+
+    // flatMapLatest switches to a new Flow whenever the current user changes
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val settingsFlow: Flow<SettingsState> = authRepository.currentUser.flatMapLatest { user ->
+        val uid = user?.uid ?: "guest_user" // Fallback if no user is logged in
+
+        context.settingsDataStore.data.map { preferences ->
+            SettingsState(
+                isDarkMode = preferences[darkModeKey(uid)] ?: false, // Default OFF
+                budgetAlertsEnabled = preferences[budgetAlertsKey(uid)] ?: false, // Default OFF
+                currency = try {
+                    SupportedCurrency.valueOf(preferences[currencyKey(uid)] ?: SupportedCurrency.ZAR.name)
+                } catch (e: Exception) {
+                    SupportedCurrency.ZAR
+                },
+                minBudget = preferences[minBudgetKey(uid)] ?: "",
+                maxBudget = preferences[maxBudgetKey(uid)] ?: ""
+            )
+        }
     }
 
-    val settingsFlow: Flow<SettingsState> = context.settingsDataStore.data.map { preferences ->
-        SettingsState(
-            isDarkMode = preferences[PreferencesKeys.DARK_MODE] ?: false,
-            budgetAlertsEnabled = preferences[PreferencesKeys.BUDGET_ALERTS] ?: true,
-            currency = try {
-                SupportedCurrency.valueOf(preferences[PreferencesKeys.CURRENCY] ?: SupportedCurrency.ZAR.name)
-            } catch (e: Exception) {
-                SupportedCurrency.ZAR
-            },
-            minBudget = preferences[PreferencesKeys.MIN_BUDGET] ?: "",
-            maxBudget = preferences[PreferencesKeys.MAX_BUDGET] ?: ""
-        )
+    // Helper function to safely fetch the UID when updating values
+    private suspend fun getCurrentUid(): String {
+        return authRepository.currentUser.firstOrNull()?.uid ?: "guest_user"
     }
 
     suspend fun updateDarkMode(isDarkMode: Boolean) {
-        context.settingsDataStore.edit { it[PreferencesKeys.DARK_MODE] = isDarkMode }
+        val uid = getCurrentUid()
+        context.settingsDataStore.edit { it[darkModeKey(uid)] = isDarkMode }
     }
 
     suspend fun updateBudgetAlerts(enabled: Boolean) {
-        context.settingsDataStore.edit { it[PreferencesKeys.BUDGET_ALERTS] = enabled }
+        val uid = getCurrentUid()
+        context.settingsDataStore.edit { it[budgetAlertsKey(uid)] = enabled }
     }
 
     suspend fun updateCurrency(currency: SupportedCurrency) {
-        context.settingsDataStore.edit { it[PreferencesKeys.CURRENCY] = currency.name }
+        val uid = getCurrentUid()
+        context.settingsDataStore.edit { it[currencyKey(uid)] = currency.name }
     }
 
     suspend fun updateMinBudget(amount: String) {
-        context.settingsDataStore.edit { it[PreferencesKeys.MIN_BUDGET] = amount }
+        val uid = getCurrentUid()
+        context.settingsDataStore.edit { it[minBudgetKey(uid)] = amount }
     }
 
     suspend fun updateMaxBudget(amount: String) {
-        context.settingsDataStore.edit { it[PreferencesKeys.MAX_BUDGET] = amount }
+        val uid = getCurrentUid()
+        context.settingsDataStore.edit { it[maxBudgetKey(uid)] = amount }
     }
 }
 
-// Data class to hold the UI state
+// Data class to hold the UI state - notifications and dark mode default to false
 data class SettingsState(
     val isDarkMode: Boolean = false,
-    val budgetAlertsEnabled: Boolean = true,
+    val budgetAlertsEnabled: Boolean = false,
     val currency: SupportedCurrency = SupportedCurrency.ZAR,
     val minBudget: String = "",
     val maxBudget: String = ""
