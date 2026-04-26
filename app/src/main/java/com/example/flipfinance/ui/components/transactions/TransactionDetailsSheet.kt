@@ -20,7 +20,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -30,7 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @Composable
@@ -46,7 +52,7 @@ fun TransactionDetailsSheet(
     var showReceipt by remember { mutableStateOf(false) }
     var showFullImage by remember { mutableStateOf(false) }
 
-
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -89,7 +95,7 @@ fun TransactionDetailsSheet(
                 shape = RoundedCornerShape(12.dp)
             )
             OutlinedTextField(
-                value = "01 Mar 2026", //(this needs to be edited)
+                value = formatTransactionDate(transaction.date),
                 onValueChange = {},
                 modifier = Modifier.weight(1f),
                 enabled = false,
@@ -109,7 +115,7 @@ fun TransactionDetailsSheet(
                 shape = RoundedCornerShape(12.dp)
             )
             OutlinedTextField(
-                value = "09:30",
+                value = formatTransactionTime(transaction.date),
                 onValueChange = {},
                 modifier = Modifier.weight(1f),
                 enabled = false,
@@ -177,17 +183,32 @@ fun TransactionDetailsSheet(
 
         // Inside TransactionDetailsSheet
         if (transaction.receiptUrl != null) {
-            Button(
-                onClick = { /* Open a simple FullScreenImage view */ },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Default.Receipt, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("View Attached Receipt", color = Color.Black)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Download Button
+                Button(
+                    onClick = {
+                        downloadReceipt(context, transaction.receiptUrl, transaction.title)
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB4D9BC)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Download, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Save", color = Color.Black)
+                }
             }
-            Spacer(modifier = Modifier.height(12.dp))
         }
     }
+}
+fun formatTransactionDate(timestamp: Long): String {
+    val date = Date(timestamp)
+    val format = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    return format.format(date)
+}
+
+fun formatTransactionTime(timestamp: Long): String {
+    val date = Date(timestamp)
+    val format = SimpleDateFormat("HH:mm", Locale.getDefault())
+    return format.format(date)
 }
