@@ -1,6 +1,11 @@
 package com.example.flipfinance.ui.screens.Transaction
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,6 +53,10 @@ fun AddTransactionScreen(
     var selectedType by remember { mutableStateOf("Expense") }
     var selectedCategory by remember { mutableStateOf("Food") }
     var notes by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        selectedImageUri = uri
+    }
 
     Scaffold(
         topBar = {
@@ -133,6 +142,31 @@ fun AddTransactionScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Text("Category", color = Color.Gray)
             CategoryDropdown(selectedCategory) { selectedCategory = it }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Receipt (Optional)", color = Color.Gray)
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp) // Slightly smaller to fit with your Notes field
+                    .padding(vertical = 4.dp)
+                    .clickable { launcher.launch("image/*") },
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    if (selectedImageUri != null) {
+                        Text("Receipt Attached ✅", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Note: You may need to import Icons.Default.AddAPhoto
+                            Text("Tap to add receipt", color = Color.Gray)
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
             Text("Notes", color = Color.Gray)

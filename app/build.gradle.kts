@@ -96,9 +96,14 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     //Supabase
-    implementation(platform("io.github.jan-tennert.supabase:bom:3.2.5"))
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
-    implementation("io.ktor:ktor-client-android:3.1.3")
+    implementation("io.ktor:ktor-client-android:2.3.12")
     implementation("io.coil-kt:coil-compose:2.6.0")
+}
+configurations.all {
+    resolutionStrategy {
+        force("androidx.browser:browser:1.8.0")
+    }
 }

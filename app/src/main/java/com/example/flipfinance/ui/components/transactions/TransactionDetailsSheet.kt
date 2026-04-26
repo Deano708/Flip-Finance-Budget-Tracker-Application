@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -138,6 +140,21 @@ fun TransactionDetailsSheet(
             ) {
                 Text("Edit", color = Color.Black)
             }
+        }
+
+        // Inside TransactionDetailsSheet
+        if (transaction.receiptUrl != null) {
+            Button(
+                onClick = { /* Open a simple FullScreenImage view */ },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Receipt, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("View Attached Receipt", color = Color.Black)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
