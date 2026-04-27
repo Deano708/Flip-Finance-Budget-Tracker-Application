@@ -78,6 +78,42 @@ class FirebaseProfileRepository @Inject constructor(
 
         Unit
     }
+    // Updates firstName/lastName in Database and email/password in Firebase Auth.
+    // Only updates fields that are non-blank — blank fields are left unchanged.
+    // Re-authentication is required by Firebase before changing email or password.
+    override suspend fun updateCredentials(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String
+    ): Result<Unit> = runCatching {
+        val user = firebaseAuth.currentUser
+            ?: throw IllegalStateException("No authenticated user")
+
+        // Update name in Database if provided
+        val nameUpdates = mutableMapOf<String, Any>()
+        if (firstName.isNotBlank()) nameUpdates["firstName"] = firstName.trim()
+        if (lastName.isNotBlank()) nameUpdates["lastName"] = lastName.trim()
+        if (nameUpdates.isNotEmpty()) {
+            firebaseDatabase.reference
+                .child("users")
+                .child(user.uid)
+                .updateChildren(nameUpdates)
+                .await()
+        }
+
+        // Update email in Auth if provided and different
+        if (email.isNotBlank() && email != user.email) {
+            user.verifyBeforeUpdateEmail(email).await()
+        }
+
+        // Update password in Auth if provided
+        if (password.isNotBlank()) {
+            user.updatePassword(password).await()
+        }
+
+        Unit
+    }
 
     private fun compressAndEncodeImage(uri: Uri): String {
         val inputStream = context.contentResolver.openInputStream(uri)

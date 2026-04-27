@@ -1,5 +1,6 @@
 package com.example.flipfinance.core.di
 
+import android.content.Context
 import com.example.flipfinance.data.remote.FirebaseAuthRepository
 import com.example.flipfinance.data.remote.FirebaseProfileRepository
 import com.example.flipfinance.domain.repository.AuthRepository
@@ -9,9 +10,8 @@ import com.google.firebase.database.FirebaseDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /*
@@ -32,7 +32,6 @@ import javax.inject.Singleton
    Availability: https://youtu.be/KOnLpNZ4AFc?si=0_ykHIWXJTBMgkbb
 */
 
-// Wiring up the Firebase instance and the Repository
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
@@ -43,12 +42,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(fbAuth: FirebaseAuth): AuthRepository =
-        FirebaseAuthRepository(fbAuth)
+    fun provideFirebaseDatabase(): FirebaseDatabase = FirebaseDatabase.getInstance()
 
     @Provides
     @Singleton
-    fun provideFirebaseDatabase(): FirebaseDatabase = FirebaseDatabase.getInstance()
+    fun provideAuthRepository(
+        fbAuth: FirebaseAuth,
+        fbDatabase: FirebaseDatabase
+    ): AuthRepository = FirebaseAuthRepository(fbAuth, fbDatabase)
 
     @Provides
     @Singleton

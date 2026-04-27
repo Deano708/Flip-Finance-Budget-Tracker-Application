@@ -21,6 +21,7 @@ import com.example.flipfinance.ui.screens.Auth.RegisterScreen
 import com.example.flipfinance.ui.screens.Profile.ProfileScreen
 import com.example.flipfinance.ViewModel.AuthEvent
 import androidx.compose.animation.ExitTransition
+import com.example.flipfinance.ui.screens.Profile.ChangeCredentialsScreen
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
    Author: Easy Tuto
@@ -111,6 +112,11 @@ fun NavGraph(
                 onLogout = {
                     authViewModel.onEvent(AuthEvent.Logout)
                 }
+            )
+        }
+        composable(Screen.ChangeCredentials.route) {
+            ChangeCredentialsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

@@ -7,5 +7,10 @@ import kotlinx.coroutines.flow.Flow
 interface ProfileRepository {
     val userProfile: Flow<UserProfile?>
     suspend fun uploadPhoto(uri: Uri): Result<Unit>
+    suspend fun updateCredentials(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String
+    ): Result<Unit>
 }
- 

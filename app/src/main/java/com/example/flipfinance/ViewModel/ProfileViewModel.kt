@@ -18,7 +18,6 @@ class ProfileViewModel @Inject constructor(
     private val repository: ProfileRepository
 ) : ViewModel() {
 
-
     val userProfile = repository.userProfile
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -31,11 +30,25 @@ class ProfileViewModel @Inject constructor(
     private val _uploadSuccess = MutableStateFlow(false)
     val uploadSuccess = _uploadSuccess.asStateFlow()
 
+    private val _isUpdating = MutableStateFlow(false)
+    val isUpdating = _isUpdating.asStateFlow()
+
+    private val _updateError = MutableStateFlow<String?>(null)
+    val updateError = _updateError.asStateFlow()
+
+    private val _updateSuccess = MutableStateFlow(false)
+    val updateSuccess = _updateSuccess.asStateFlow()
+
     fun onEvent(event: ProfileEvent) {
         when (event) {
             is ProfileEvent.UploadPhoto -> uploadPhoto(event.uri)
             is ProfileEvent.ClearUploadError -> _uploadError.value = null
             is ProfileEvent.ClearUploadSuccess -> _uploadSuccess.value = false
+            is ProfileEvent.UpdateCredentials -> updateCredentials(
+                event.firstName, event.lastName, event.email, event.password
+            )
+            is ProfileEvent.ClearUpdateError -> _updateError.value = null
+            is ProfileEvent.ClearUpdateSuccess -> _updateSuccess.value = false
         }
     }
 
@@ -49,10 +62,34 @@ class ProfileViewModel @Inject constructor(
             _isUploading.value = false
         }
     }
+
+    private fun updateCredentials(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String
+    ) {
+        viewModelScope.launch {
+            _isUpdating.value = true
+            _updateError.value = null
+            repository.updateCredentials(firstName, lastName, email, password)
+                .onSuccess { _updateSuccess.value = true }
+                .onFailure { _updateError.value = it.message }
+            _isUpdating.value = false
+        }
+    }
 }
 
 sealed class ProfileEvent {
     data class UploadPhoto(val uri: Uri) : ProfileEvent()
     data object ClearUploadError : ProfileEvent()
     data object ClearUploadSuccess : ProfileEvent()
+    data class UpdateCredentials(
+        val firstName: String,
+        val lastName: String,
+        val email: String,
+        val password: String
+    ) : ProfileEvent()
+    data object ClearUpdateError : ProfileEvent()
+    data object ClearUpdateSuccess : ProfileEvent()
 }
