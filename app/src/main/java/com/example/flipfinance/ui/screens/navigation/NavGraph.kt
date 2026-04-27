@@ -1,5 +1,6 @@
 package com.example.flipfinance.ui.screens.navigation
 
+import androidx.compose.animation.EnterTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
@@ -18,7 +19,8 @@ import com.example.flipfinance.ui.screens.Auth.ForgotPasswordScreen
 import com.example.flipfinance.ui.screens.Auth.LoginScreen
 import com.example.flipfinance.ui.screens.Auth.RegisterScreen
 import com.example.flipfinance.ui.screens.Profile.ProfileScreen
-
+import com.example.flipfinance.ViewModel.AuthEvent
+import androidx.compose.animation.ExitTransition
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
    Author: Easy Tuto
@@ -31,15 +33,16 @@ import com.example.flipfinance.ui.screens.Profile.ProfileScreen
 @Composable
 fun NavGraph(
     navController: NavHostController,
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
-    val authViewModel: AuthViewModel = hiltViewModel()
-    val currentUser by authViewModel.currentUser.collectAsState(initial = null)
 
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None }
     ) {
         // Auth
         composable(Screen.Login.route) {
@@ -103,14 +106,10 @@ fun NavGraph(
             ProfileScreen(
                 onNavigateToChangeCredentials = { navController.navigate(Screen.ChangeCredentials.route) },
                 onDeleteAccount = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    authViewModel.onEvent(AuthEvent.DeleteAccount)
                 },
                 onLogout = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    authViewModel.onEvent(AuthEvent.Logout)
                 }
             )
         }

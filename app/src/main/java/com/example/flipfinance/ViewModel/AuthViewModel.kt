@@ -127,6 +127,9 @@ class AuthViewModel @Inject constructor(
         _passwordError.value = null
         _error.value = null
     }
+    fun resetAuthentication() {
+        _isAuthenticated.value = false
+    }
 }
 
 sealed class AuthEvent {
