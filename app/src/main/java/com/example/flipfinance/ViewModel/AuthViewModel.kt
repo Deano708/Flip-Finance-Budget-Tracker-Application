@@ -8,11 +8,8 @@ import com.example.flipfinance.domain.util.AuthValidator
 import com.example.flipfinance.domain.util.PasswordResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -51,16 +48,24 @@ class AuthViewModel @Inject constructor(
     private val _resetEmailSent = MutableStateFlow(false)
     val resetEmailSent = _resetEmailSent.asStateFlow()
 
-    // Clear Errors when user Inputs text after failure
+    // Account deleted — the screen observes this to navigate away
+    private val _accountDeleted = MutableStateFlow(false)
+    val accountDeleted = _accountDeleted.asStateFlow()
+
+    // Clear errors when user inputs text after a failure
     fun onEmailChange() { _emailError.value = null }
     fun onPasswordChange() { _passwordError.value = null }
 
     fun onEvent(event: AuthEvent) {
         when (event) {
-            is AuthEvent.Login -> performAction(shouldAuthenticate = true) { repository.login(event.email, event.pass) }
+            is AuthEvent.Login -> performAction(shouldAuthenticate = true) {
+                repository.login(event.email, event.pass)
+            }
             is AuthEvent.Register -> {
                 if (validateInputs(event.email, event.pass)) {
-                    performAction(shouldAuthenticate = true) { repository.register(event.email, event.pass) }
+                    performAction(shouldAuthenticate = true) {
+                        repository.register(event.email, event.pass)
+                    }
                 }
             }
             is AuthEvent.ResetPassword -> {
@@ -73,6 +78,15 @@ class AuthViewModel @Inject constructor(
                 } else {
                     _emailError.value = "Please Enter a Valid Email Address"
                 }
+            }
+            // Signs the user out — Firebase Auth state listener in MainActivity
+            is AuthEvent.Logout -> repository.logout()
+
+            // Deletes the Firebase Auth account — on success the auth state
+            is AuthEvent.DeleteAccount -> performAction(shouldAuthenticate = false) {
+                val result = repository.deleteAccount()
+                if (result.isSuccess) _accountDeleted.value = true
+                result
             }
         }
     }
@@ -92,14 +106,15 @@ class AuthViewModel @Inject constructor(
 
     private fun performAction(
         shouldAuthenticate: Boolean = false,
-        action: suspend () -> Result<Unit>) {
+        action: suspend () -> Result<Unit>
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             action()
                 .onSuccess {
                     if (shouldAuthenticate) {
-                        _isAuthenticated.value = true  // Set to true if it was a Login or Register event
+                        _isAuthenticated.value = true
                     }
                 }
                 .onFailure { _error.value = it.message }
@@ -112,13 +127,12 @@ class AuthViewModel @Inject constructor(
         _passwordError.value = null
         _error.value = null
     }
-
-
 }
 
 sealed class AuthEvent {
     data class Login(val email: String, val pass: String) : AuthEvent()
     data class Register(val email: String, val pass: String) : AuthEvent()
-
     data class ResetPassword(val email: String) : AuthEvent()
+    data object Logout : AuthEvent()
+    data object DeleteAccount : AuthEvent()
 }
