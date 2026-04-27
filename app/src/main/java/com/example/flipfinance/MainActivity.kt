@@ -22,6 +22,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.flipfinance.ViewModel.AuthViewModel
 import com.example.flipfinance.ViewModel.MainViewModel
+import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.ui.components.BottomBar
 import com.example.flipfinance.ui.screens.Onboarding.OnboardingScreen
 import com.example.flipfinance.ui.screens.navigation.NavGraph
@@ -45,15 +46,16 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             val mainViewModel: MainViewModel = hiltViewModel()
+            val settingsViewModel: SettingsViewModel = hiltViewModel()
 
             // null = Loading, false = Show Onboarding, true = To Login
             val hasCompletedOnboarding by mainViewModel.hasCompletedOnboarding.collectAsState()
+            val settingsState by settingsViewModel.uiState.collectAsState()
 
-            FlipFinanceTheme {
+            FlipFinanceTheme(darkTheme = settingsState.isDarkMode) {
                 AnimatedContent(
                     targetState = hasCompletedOnboarding,
                     transitionSpec = {
-                        // Fades the Onboarding out and the App in simultaneously
                         fadeIn(animationSpec = tween(500)) togetherWith
                                 fadeOut(animationSpec = tween(500))
                     },

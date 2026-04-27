@@ -33,7 +33,7 @@ import com.example.flipfinance.data.local.Entities.Transaction
 */
 
 @Composable
-fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
+fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -45,7 +45,7 @@ fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(text = transaction.title, style = MaterialTheme.typography.titleLarge)
                 Text(
-                    text = "R${transaction.amount}",
+                    text = "$currencySymbol${transaction.amount}",
                     color = if (transaction.expenseType == "Income") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
             }

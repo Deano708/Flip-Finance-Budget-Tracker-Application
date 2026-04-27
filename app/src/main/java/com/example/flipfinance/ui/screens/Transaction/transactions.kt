@@ -22,6 +22,8 @@ import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.components.TransactionItem
 import com.example.flipfinance.ui.components.transactions.TransactionDetailsSheet
 import com.example.flipfinance.ui.screens.navigation.Screen
+import com.example.flipfinance.ViewModel.SettingsViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 /*
    Title: Save data in a local database using Room
@@ -67,10 +69,14 @@ import com.example.flipfinance.ui.screens.navigation.Screen
 @Composable
 fun TransactionScreen(
     viewModel: TransactionViewModel,
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
     navController: NavController, // Added NavController for navigation
     onTransactionClick: (Transaction) -> Unit
 ) {
     val transactionList by viewModel.transactions.collectAsState()
+    //settings state for currency symbol
+    val settingsState by settingsViewModel.uiState.collectAsState()
+    val currencySymbol = settingsState.currency.symbol
 
     // for the bottom sheet
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
@@ -115,6 +121,7 @@ fun TransactionScreen(
                 items(transactionList) { transaction ->
                     TransactionItem(
                         transaction = transaction,
+                        currencySymbol = currencySymbol, //dynamic symbol here
                         onClick = {
                             selectedTransaction = transaction
                             showSheet = true
@@ -134,6 +141,7 @@ fun TransactionScreen(
                     TransactionDetailsSheet(
                         transaction = selectedTransaction!!,
                         onDelete = {
+                            //NEED TO PASS TO TRANSACTION DELETE PAGE
                             viewModel.deleteTransaction(selectedTransaction!!.transactionId)
                             showSheet = false
                         },
