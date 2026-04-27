@@ -44,17 +44,16 @@ class AuthViewModel @Inject constructor(
     private val _passwordError = MutableStateFlow<String?>(null)
     val passwordError = _passwordError.asStateFlow()
 
-    // Reset User Password
     private val _resetEmailSent = MutableStateFlow(false)
     val resetEmailSent = _resetEmailSent.asStateFlow()
 
-    // Account deleted — the screen observes this to navigate away
     private val _accountDeleted = MutableStateFlow(false)
     val accountDeleted = _accountDeleted.asStateFlow()
 
-    // Clear errors when user inputs text after a failure
     fun onEmailChange() { _emailError.value = null }
     fun onPasswordChange() { _passwordError.value = null }
+
+    fun resetAuthentication() { _isAuthenticated.value = false }
 
     fun onEvent(event: AuthEvent) {
         when (event) {
@@ -64,7 +63,7 @@ class AuthViewModel @Inject constructor(
             is AuthEvent.Register -> {
                 if (validateInputs(event.email, event.pass)) {
                     performAction(shouldAuthenticate = true) {
-                        repository.register(event.email, event.pass)
+                        repository.register(event.email, event.pass, event.firstName, event.lastName)
                     }
                 }
             }
@@ -79,10 +78,7 @@ class AuthViewModel @Inject constructor(
                     _emailError.value = "Please Enter a Valid Email Address"
                 }
             }
-            // Signs the user out — Firebase Auth state listener in MainActivity
             is AuthEvent.Logout -> repository.logout()
-
-            // Deletes the Firebase Auth account — on success the auth state
             is AuthEvent.DeleteAccount -> performAction(shouldAuthenticate = false) {
                 val result = repository.deleteAccount()
                 if (result.isSuccess) _accountDeleted.value = true
@@ -94,13 +90,8 @@ class AuthViewModel @Inject constructor(
     private fun validateInputs(email: String, pass: String): Boolean {
         val isEmailValid = AuthValidator.isValidEmail(email)
         val passwordResult = AuthValidator.validatePassword(pass)
-
         if (!isEmailValid) _emailError.value = "Please enter a Valid Email Address"
-
-        if (passwordResult is PasswordResult.Invalid) {
-            _passwordError.value = passwordResult.message
-        }
-
+        if (passwordResult is PasswordResult.Invalid) _passwordError.value = passwordResult.message
         return isEmailValid && passwordResult is PasswordResult.Valid
     }
 
@@ -112,11 +103,7 @@ class AuthViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             action()
-                .onSuccess {
-                    if (shouldAuthenticate) {
-                        _isAuthenticated.value = true
-                    }
-                }
+                .onSuccess { if (shouldAuthenticate) _isAuthenticated.value = true }
                 .onFailure { _error.value = it.message }
             _isLoading.value = false
         }
@@ -127,14 +114,16 @@ class AuthViewModel @Inject constructor(
         _passwordError.value = null
         _error.value = null
     }
-    fun resetAuthentication() {
-        _isAuthenticated.value = false
-    }
 }
 
 sealed class AuthEvent {
     data class Login(val email: String, val pass: String) : AuthEvent()
-    data class Register(val email: String, val pass: String) : AuthEvent()
+    data class Register(
+        val email: String,
+        val pass: String,
+        val firstName: String,
+        val lastName: String
+    ) : AuthEvent()
     data class ResetPassword(val email: String) : AuthEvent()
     data object Logout : AuthEvent()
     data object DeleteAccount : AuthEvent()
