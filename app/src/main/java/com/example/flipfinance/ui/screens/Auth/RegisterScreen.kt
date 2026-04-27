@@ -66,8 +66,11 @@ fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit
 ) {
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
     val isLoading by viewModel.isLoading.collectAsState()
     val isAuthenticated by viewModel.isAuthenticated.collectAsState()
     val emailError by viewModel.emailError.collectAsState()
@@ -82,12 +85,32 @@ fun RegisterScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Create Account", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
+        Text(
+            "Create Account",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
         Spacer(Modifier.height(32.dp))
+
+        PrimaryTextField(
+            value = firstName,
+            onValueChange = { firstName = it },
+            label = "First Name"
+        )
+        Spacer(Modifier.height(16.dp))
+
+        PrimaryTextField(
+            value = lastName,
+            onValueChange = { lastName = it },
+            label = "Last Name"
+        )
+        Spacer(Modifier.height(16.dp))
 
         PrimaryTextField(
             value = email,
@@ -113,8 +136,20 @@ fun RegisterScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        PrimaryButton(text = "Sign Up", isLoading = isLoading, onClick = { viewModel.onEvent(
-            AuthEvent.Register(email, password)) })
+        PrimaryButton(
+            text = "Sign Up",
+            isLoading = isLoading,
+            onClick = {
+                viewModel.onEvent(
+                    AuthEvent.Register(
+                        email = email,
+                        pass = password,
+                        firstName = firstName,
+                        lastName = lastName
+                    )
+                )
+            }
+        )
 
         TextButton(onClick = onNavigateToLogin) {
             Text("Already Have an account? Login")
