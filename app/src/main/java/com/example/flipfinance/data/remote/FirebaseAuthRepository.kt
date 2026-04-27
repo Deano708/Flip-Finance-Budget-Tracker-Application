@@ -36,7 +36,6 @@ import com.example.flipfinance.domain.model.User
    Availability: https://youtu.be/nVhPqPpgndM?si=-2e5lkDbB83rUAoS
 */
 
-
 class FirebaseAuthRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth
 ) : AuthRepository {
@@ -62,10 +61,16 @@ class FirebaseAuthRepository @Inject constructor(
 
     override fun logout() = firebaseAuth.signOut()
 
+    // Deletes the Firebase Auth account for the currently signed-in user.
+    override suspend fun deleteAccount(): Result<Unit> = runCatching {
+        firebaseAuth.currentUser?.delete()?.await()
+            ?: throw IllegalStateException("No authenticated user")
+        Unit
+    }
+
     // Reset Password
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> = runCatching {
         firebaseAuth.sendPasswordResetEmail(email).await()
         Unit
     }
-
 }
