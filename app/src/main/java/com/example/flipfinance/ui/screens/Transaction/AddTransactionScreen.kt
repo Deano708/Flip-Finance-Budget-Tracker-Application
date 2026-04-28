@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,8 @@ import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ui.components.transactions.CategoryDropdown
 import com.example.flipfinance.ui.components.transactions.TransactionTypeToggle
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.flipfinance.ViewModel.SettingsViewModel
 
 /*
    Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
@@ -101,8 +104,11 @@ import com.example.flipfinance.ui.components.transactions.TransactionTypeToggle
 @Composable
 fun AddTransactionScreen(
     viewModel: TransactionViewModel,
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
+    val settingsState by settingsViewModel.uiState.collectAsState()
+    val currencySymbol = settingsState.currency.symbol
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf("Expense") }
@@ -180,7 +186,7 @@ fun AddTransactionScreen(
                         )
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("R", style = MaterialTheme.typography.titleLarge)
+                        Text(currencySymbol, style = MaterialTheme.typography.titleLarge) //dynamic currency symbol
                         TextField(
                             value = amount,
                             onValueChange = { amount = it },
