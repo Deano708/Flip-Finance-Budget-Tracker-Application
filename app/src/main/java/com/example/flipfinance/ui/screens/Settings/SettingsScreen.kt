@@ -16,10 +16,12 @@ import com.example.flipfinance.Preferences.Settings.SupportedCurrency
 import com.example.flipfinance.ViewModel.SettingsViewModel
 
 /*
-   Title: Material Design 3 - Exposed Dropdown Menu
-   Author: Android Developers
-   Date accessed: 18/04/2026
-   Availability: https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary#ExposedDropdownMenuBox(kotlin.Boolean,kotlin.Function1,androidx.compose.ui.Modifier,kotlin.Function1)
+Title: Disclosure of AI Usage in my Assessment.
+• Section: SettingsScreen.
+• AI Tool: Gemini
+• Purpose/intention : Design and syntax implementation of SettingsScreen, including card designs for currency, budget and preferences.
+• Date(s) 26/04/2026.
+• https://gemini.google.com/share/71c6cb29b3c5
 */
 
 @OptIn(ExperimentalMaterial3Api::class)

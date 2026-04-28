@@ -15,10 +15,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /*
-   Title: Offline data storage with Jetpack DataStore
-   Author: Android Developers
-   Date accessed: 18/04/2026
-   Availability: https://developer.android.com/topic/libraries/architecture/datastore
+Title: Disclosure of AI Usage in my Assessment.
+• Section: SettingsManager.
+• AI Tool: Gemini
+• Purpose/intention : Design and syntax implementation of SettingsManager, including preference settings for dark/light theme , currecy selection and budget limits.
+• Date(s) 25/04/2026.
+• https://gemini.google.com/share/71c6cb29b3c5
 */
 
 // Extension property to create DataStore
