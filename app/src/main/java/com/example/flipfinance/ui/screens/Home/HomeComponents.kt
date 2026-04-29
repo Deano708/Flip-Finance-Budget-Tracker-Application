@@ -77,6 +77,7 @@ fun GreetingSection(greeting: String, userName: String) {
 fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color, currencySymbol: String) {
     val progress = (totalSpent / budget).toFloat().coerceIn(0f, 1f)
 
+    val barColor = if (progress > 0.8f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     Card(
         shape = RoundedCornerShape(28.dp),
         modifier = Modifier.fillMaxWidth().height(190.dp),
@@ -94,8 +95,9 @@ fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color, 
         ) {
             Column {
                 Text("Total Spent This Month", style = MaterialTheme.typography.labelMedium)
+                // DYNAMIC CURRENCY APPLIED HERE
                 Text(
-                    text = "R ${String.format("%,.2f", totalSpent)}",
+                    text = "$currencySymbol ${String.format("%,.2f", totalSpent)}",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -103,7 +105,7 @@ fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color, 
                 Spacer(modifier = Modifier.weight(1f))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Budget: $budget", style = MaterialTheme.typography.labelSmall)
+                    Text("Budget: $currencySymbol $budget", style = MaterialTheme.typography.labelSmall)
                     Text("${(progress * 100).toInt()}% Used", style = MaterialTheme.typography.labelSmall)
                 }
 
@@ -156,6 +158,7 @@ fun SummaryCard(
 @Composable
 fun TransactionListItem(transaction: Transaction, currencySymbol: String) {
     val isExpense = transaction.expenseType == "Expense"
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -175,15 +178,26 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String) {
         Spacer(Modifier.width(16.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(transaction.title, fontWeight = FontWeight.SemiBold)
-            Text(transaction.expenseCategory, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-        }
+            // This will automatically be White in Dark Mode and Black in Light Mode
+            Text(
+                text = transaction.title,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-        Text(
-            text = "${if (isExpense) "-" else "+"} $currencySymbol ${String.format("%.2f", transaction.amount)}",
-            fontWeight = FontWeight.Bold,
-            color = if (isExpense) Color.Black else MaterialTheme.colorScheme.primary
-        )
+            Text(
+                text = transaction.expenseCategory,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+
+            Text(
+                text = "${if (isExpense) "-" else "+"} $currencySymbol ${String.format("%.2f", transaction.amount)}",
+                fontWeight = FontWeight.Bold,
+                // Use your PrimaryGreen for income and a bright Red for expenses
+                color = if (isExpense) Color(0xFFCF6679) else MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
