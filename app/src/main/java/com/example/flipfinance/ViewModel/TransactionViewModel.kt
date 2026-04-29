@@ -18,6 +18,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
 import androidx.lifecycle.viewModelScope
+// For Home
+import kotlinx.coroutines.flow.map
+import java.util.Calendar
 
 /*
    Title: Save data in a local database using Room
@@ -76,6 +79,72 @@ class TransactionViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    // Home screen implementation - for total spent in this month
+    val totalSpentThisMonth: StateFlow<Double> = transactions
+        .map { list ->
+            val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+
+            list.filter {
+                val cal = Calendar.getInstance().apply { timeInMillis = it.date }
+                cal.get(Calendar.MONTH) == currentMonth &&
+                        cal.get(Calendar.YEAR) == currentYear &&
+                        it.expenseType == "Expense"
+            }.sumOf { it.amount }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    // Home - Highest Category Spent
+    val highestCategorySpend: StateFlow<Pair<String, Double>?> = transactions
+        .map { list ->
+            list.filter { it.expenseType == "Expense" }
+                .groupBy { it.expenseCategory }
+                .mapValues { entry -> entry.value.sumOf { it.amount } }
+                .toList()
+                .maxByOrNull { it.second }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    // Home - Data for Daily Spending Graph
+    // Groups spending by day of the month for the graph UI
+    val dailySpendingMap: StateFlow<Map<Int, Double>> = transactions
+        .map { list ->
+            val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
+            list.filter {
+                val cal = Calendar.getInstance().apply { timeInMillis = it.date }
+                cal.get(Calendar.MONTH) == currentMonth && it.expenseType == "Expense"
+            }
+                .groupBy {
+                    val cal = Calendar.getInstance().apply { timeInMillis = it.date }
+                    cal.get(Calendar.DAY_OF_MONTH)
+                }
+                .mapValues { it.value.sumOf { it.amount } }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    // Home - Comparison logic: vs Last Month, returns the percentage increase/decrease
+    val spendingComparison: StateFlow<Double> = transactions
+        .map { list ->
+            val now = Calendar.getInstance()
+            val currentMonth = now.get(Calendar.MONTH)
+            val lastMonth = if (currentMonth == 0) 11 else currentMonth - 1
+
+            val thisMonthTotal = list.filter {
+                val c = Calendar.getInstance().apply { timeInMillis = it.date }
+                c.get(Calendar.MONTH) == currentMonth && it.expenseType == "Expense"
+            }.sumOf { it.amount }
+
+            val lastMonthTotal = list.filter {
+                val c = Calendar.getInstance().apply { timeInMillis = it.date }
+                c.get(Calendar.MONTH) == lastMonth && it.expenseType == "Expense"
+            }.sumOf { it.amount }
+
+            if (lastMonthTotal == 0.0) 0.0
+            else ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+
     fun addTransaction(transaction: Transaction, imageUri: Uri?) {
         viewModelScope.launch {
             var finalImageUrl: String? = null
@@ -117,5 +186,6 @@ class TransactionViewModel @Inject constructor(
             dao.deleteTransaction(id)
         }
     }
+
 }
 

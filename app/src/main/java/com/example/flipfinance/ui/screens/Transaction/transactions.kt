@@ -20,7 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.components.TransactionItem
@@ -110,11 +112,13 @@ import com.example.flipfinance.ui.screens.navigation.Screen
 @Composable
 fun TransactionScreen(
     viewModel: TransactionViewModel,
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
     navController: NavController, // Added NavController for navigation
     onTransactionClick: (Transaction) -> Unit
 ) {
     val transactionList by viewModel.transactions.collectAsState()
-
+    val settingsState by settingsViewModel.uiState.collectAsState()
+    val currencySymbol = settingsState.currency.symbol
     // Filter State
     var selectedFilter by remember { mutableStateOf("All") }
 
@@ -243,6 +247,7 @@ fun TransactionScreen(
             ) {
                 TransactionDetailsSheet(
                     transaction = selectedTransaction!!,
+                    currencySymbol = currencySymbol,
                     onDelete = {
                         viewModel.deleteTransaction(selectedTransaction!!.transactionId)
                         showSheet = false
