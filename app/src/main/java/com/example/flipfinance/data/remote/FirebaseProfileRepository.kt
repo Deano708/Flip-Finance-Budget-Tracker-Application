@@ -7,8 +7,8 @@ import android.net.Uri
 import android.util.Base64
 import com.example.flipfinance.domain.model.UserProfile
 import com.example.flipfinance.domain.repository.ProfileRepository
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
@@ -22,40 +22,38 @@ import androidx.core.graphics.scale
 class FirebaseProfileRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,
-    @ApplicationContext private val context: Context) : ProfileRepository {
+    @ApplicationContext private val context: Context
+) : ProfileRepository {
+
+    // Emits a fresh UserProfile whenever auth state changes.
+    // Reads firstName/lastName from Realtime Database users/{uid}/
     override val userProfile: Flow<UserProfile?> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { auth ->
             val firebaseUser = auth.currentUser
             if (firebaseUser == null) {
                 trySend(null)
             } else {
-                val parts = firebaseUser.displayName.orEmpty().trim().split(" ", limit = 2)
-
                 firebaseDatabase.reference
                     .child("users")
                     .child(firebaseUser.uid)
-                    .child("photoUrl")
                     .get()
                     .addOnSuccessListener { snapshot ->
                         val profile = UserProfile(
                             uid       = firebaseUser.uid,
-                            firstName = parts.getOrElse(0) { "" },
-                            lastName  = parts.getOrElse(1) { "" },
+                            firstName = snapshot.child("firstName").getValue(String::class.java) ?: "",
+                            lastName  = snapshot.child("lastName").getValue(String::class.java) ?: "",
                             email     = firebaseUser.email.orEmpty(),
-                            photoUrl  = snapshot.getValue(String::class.java)
+                            photoUrl  = snapshot.child("photoUrl").getValue(String::class.java)
                         )
                         trySend(profile)
                     }
                     .addOnFailureListener {
-
-                        val profile = UserProfile(
-                            uid       = firebaseUser.uid,
-                            firstName = parts.getOrElse(0) { "" },
-                            lastName  = parts.getOrElse(1) { "" },
-                            email     = firebaseUser.email.orEmpty(),
-                            photoUrl  = null
+                        trySend(
+                            UserProfile(
+                                uid   = firebaseUser.uid,
+                                email = firebaseUser.email.orEmpty()
+                            )
                         )
-                        trySend(profile)
                     }
             }
         }
@@ -63,6 +61,7 @@ class FirebaseProfileRepository @Inject constructor(
         awaitClose { firebaseAuth.removeAuthStateListener(listener) }
     }
 
+    // Uploads photo as Base64 into Realtime Database
     override suspend fun uploadPhoto(uri: Uri): Result<Unit> = runCatching {
         val uid = firebaseAuth.currentUser?.uid
             ?: throw IllegalStateException("No authenticated user")
@@ -75,9 +74,9 @@ class FirebaseProfileRepository @Inject constructor(
             .child("photoUrl")
             .setValue(base64String)
             .await()
-
         Unit
     }
+
     // Updates firstName/lastName in Database and email/password in Firebase Auth.
     // Only updates fields that are non-blank — blank fields are left unchanged.
     // Re-authentication is required by Firebase before changing email or password.
@@ -122,24 +121,20 @@ class FirebaseProfileRepository @Inject constructor(
         val originalBitmap = BitmapFactory.decodeStream(inputStream)
         inputStream.close()
 
-        //Scale down to max 400x400 while keeping aspect ratio
         val maxSize = 400
         val scale = minOf(
             maxSize.toFloat() / originalBitmap.width,
             maxSize.toFloat() / originalBitmap.height,
             1f
         )
-
         val scaledBitmap = originalBitmap.scale(
             (originalBitmap.width * scale).toInt(),
             (originalBitmap.height * scale).toInt()
         )
 
-        //Compress to JPEG at 60% quality,keeping Base64  under 1MB for most photos
         val outputStream = ByteArrayOutputStream()
         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
 
-        //Clean up bitmaps from memory
         if (scaledBitmap != originalBitmap) scaledBitmap.recycle()
         originalBitmap.recycle()
 
