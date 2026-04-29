@@ -45,6 +45,7 @@ android {
 
     buildFeatures {
         compose = true // Enables Compose support
+        buildConfig = true
     }
 
     compileOptions {
@@ -109,4 +110,9 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.ktor:ktor-client-android:3.1.3")
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Unit Testing Support
+    testImplementation("com.google.dagger:hilt-android-testing:2.51.1")
+    kspTest("com.google.dagger:hilt-compiler:2.51.1")
+
 }
