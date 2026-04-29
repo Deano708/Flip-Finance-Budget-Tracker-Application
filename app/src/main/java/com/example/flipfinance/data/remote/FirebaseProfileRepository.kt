@@ -83,7 +83,7 @@ class FirebaseProfileRepository @Inject constructor(
     override suspend fun updateCredentials(
         firstName: String,
         lastName: String,
-        email: String,
+
         password: String
     ): Result<Unit> = runCatching {
         val user = firebaseAuth.currentUser
@@ -102,9 +102,7 @@ class FirebaseProfileRepository @Inject constructor(
         }
 
         // Update email in Auth if provided and different
-        if (email.isNotBlank() && email != user.email) {
-            user.verifyBeforeUpdateEmail(email).await()
-        }
+
 
         // Update password in Auth if provided
         if (password.isNotBlank()) {

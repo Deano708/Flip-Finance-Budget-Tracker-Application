@@ -45,7 +45,7 @@ class ProfileViewModel @Inject constructor(
             is ProfileEvent.ClearUploadError -> _uploadError.value = null
             is ProfileEvent.ClearUploadSuccess -> _uploadSuccess.value = false
             is ProfileEvent.UpdateCredentials -> updateCredentials(
-                event.firstName, event.lastName, event.email, event.password
+                event.firstName, event.lastName,event.password
             )
             is ProfileEvent.ClearUpdateError -> _updateError.value = null
             is ProfileEvent.ClearUpdateSuccess -> _updateSuccess.value = false
@@ -66,13 +66,13 @@ class ProfileViewModel @Inject constructor(
     private fun updateCredentials(
         firstName: String,
         lastName: String,
-        email: String,
+
         password: String
     ) {
         viewModelScope.launch {
             _isUpdating.value = true
             _updateError.value = null
-            repository.updateCredentials(firstName, lastName, email, password)
+            repository.updateCredentials(firstName, lastName,  password)
                 .onSuccess { _updateSuccess.value = true }
                 .onFailure { _updateError.value = it.message }
             _isUpdating.value = false
@@ -87,7 +87,7 @@ sealed class ProfileEvent {
     data class UpdateCredentials(
         val firstName: String,
         val lastName: String,
-        val email: String,
+
         val password: String
     ) : ProfileEvent()
     data object ClearUpdateError : ProfileEvent()

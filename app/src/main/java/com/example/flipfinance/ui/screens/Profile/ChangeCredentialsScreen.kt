@@ -31,7 +31,6 @@ fun ChangeCredentialsScreen(
     // Pre-fill fields with current values
     var firstName by remember(userProfile) { mutableStateOf(userProfile?.firstName ?: "") }
     var lastName by remember(userProfile) { mutableStateOf(userProfile?.lastName ?: "") }
-    var email by remember(userProfile) { mutableStateOf(userProfile?.email ?: "") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
@@ -107,12 +106,6 @@ fun ChangeCredentialsScreen(
             )
 
             PrimaryTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = "Email"
-            )
-
-            PrimaryTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = "New Password",
@@ -145,7 +138,7 @@ fun ChangeCredentialsScreen(
                         ProfileEvent.UpdateCredentials(
                             firstName = firstName,
                             lastName = lastName,
-                            email = email,
+
                             password = password
                         )
                     )

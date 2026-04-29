@@ -10,7 +10,7 @@ interface ProfileRepository {
     suspend fun updateCredentials(
         firstName: String,
         lastName: String,
-        email: String,
+
         password: String
     ): Result<Unit>
 }
