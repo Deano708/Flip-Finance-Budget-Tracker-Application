@@ -160,7 +160,7 @@ fun ProfileScreen(
         ) {
             // ── Header ───────────────────────────────────────────────────
             Surface(
-                color = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.background,
                 tonalElevation = 1.dp
             ) {
                 Column(
