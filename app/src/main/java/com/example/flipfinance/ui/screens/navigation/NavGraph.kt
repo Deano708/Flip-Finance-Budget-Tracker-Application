@@ -21,6 +21,7 @@ import com.example.flipfinance.ui.screens.Auth.RegisterScreen
 import com.example.flipfinance.ui.screens.Profile.ProfileScreen
 import com.example.flipfinance.ViewModel.AuthEvent
 import androidx.compose.animation.ExitTransition
+import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.ui.screens.Profile.ChangeCredentialsScreen
 import com.example.flipfinance.ui.screens.Settings.SettingsScreen
@@ -111,7 +112,8 @@ fun NavGraph(
             val transactionViewModel: TransactionViewModel = hiltViewModel()
 
             HomeScreen(
-                viewModel = hiltViewModel(),
+                transactionViewModel = hiltViewModel<TransactionViewModel>(),
+                settingsViewModel = hiltViewModel<SettingsViewModel>(),
                 onNavigateToAdd = {
                     navController.navigate("add_transaction")
                 },

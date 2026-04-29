@@ -74,7 +74,7 @@ fun GreetingSection(greeting: String, userName: String) {
 
 // card at the top. It uses a LinearProgressIndicator
 @Composable
-fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color) {
+fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color, currencySymbol: String) {
     val progress = (totalSpent / budget).toFloat().coerceIn(0f, 1f)
 
     Card(
@@ -117,6 +117,11 @@ fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color) 
                 )
             }
         }
+        Text(
+            text = "$currencySymbol ${String.format("%,.2f", totalSpent)}",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.ExtraBold
+        )
     }
 }
 
@@ -149,9 +154,8 @@ fun SummaryCard(
 
 // maps Transaction entity from Room to a row in the "Recent Transactions" section
 @Composable
-fun TransactionListItem(transaction: Transaction) {
+fun TransactionListItem(transaction: Transaction, currencySymbol: String) {
     val isExpense = transaction.expenseType == "Expense"
-
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -176,9 +180,9 @@ fun TransactionListItem(transaction: Transaction) {
         }
 
         Text(
-            text = "${if (isExpense) "-" else "+"} R ${String.format("%.2f", transaction.amount)}",
+            text = "${if (isExpense) "-" else "+"} $currencySymbol ${String.format("%.2f", transaction.amount)}",
             fontWeight = FontWeight.Bold,
-            color = if (isExpense) Color.Black else PrimaryGreen
+            color = if (isExpense) Color.Black else MaterialTheme.colorScheme.primary
         )
     }
 }
