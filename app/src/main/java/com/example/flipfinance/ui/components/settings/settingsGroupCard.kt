@@ -56,7 +56,8 @@ fun SettingsGroupCard(title: String, content: @Composable ColumnScope.() -> Unit
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             content()

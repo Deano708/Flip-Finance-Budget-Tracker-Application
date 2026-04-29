@@ -3,6 +3,7 @@ package com.example.flipfinance.ui.components.settings
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -44,9 +45,21 @@ fun SettingsTextField(value: String, label: String, onValueChange: (String) -> U
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Frame.Text(label) },
+        label = {
+            Text(
+                text = label,
+                color = colorScheme.onSurfaceVariant
+            )
+        },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        leadingIcon = { Text(symbol, fontWeight = FontWeight.Bold) },
+        leadingIcon = {
+            Text(
+                text = symbol,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.primary
+            )
+        },
         shape = MaterialTheme.shapes.large, // Using Shape.kt Large
         modifier = Modifier.fillMaxWidth(),
         colors = OutlinedTextFieldDefaults.colors(
