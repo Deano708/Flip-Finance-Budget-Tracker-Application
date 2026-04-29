@@ -11,9 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.flipfinance.Preferences.Settings.SupportedCurrency
 import com.example.flipfinance.ViewModel.SettingsViewModel
+import com.example.flipfinance.ui.components.settings.SettingsGroupCard
+import com.example.flipfinance.ui.components.settings.SettingsTextButton
+import com.example.flipfinance.ui.components.settings.SettingsTextField
+import com.example.flipfinance.ui.components.settings.ToggleSettingRow
 
 /*
 Title: Disclosure of AI Usage in my Assessment.
@@ -31,54 +36,53 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    val colorScheme = MaterialTheme.colorScheme
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-
-        // GROUP 1: Preferences
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Preferences", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Dark Mode")
-                    Switch(
-                        checked = state.isDarkMode,
-                        onCheckedChange = { viewModel.onDarkModeToggled(it) }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Settings",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp
                     )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Budget Alert Notifications")
-                    Switch(
-                        checked = state.budgetAlertsEnabled,
-                        onCheckedChange = { viewModel.onBudgetAlertsToggled(it) }
-                    )
-                }
-            }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorScheme.background,
+                    titleContentColor = colorScheme.onBackground
+                )
+            )
         }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 20.dp)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // GROUP 2: Currency
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Currency", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(16.dp))
+            // GROUP 1: Preferences
+            SettingsGroupCard(title = "Preferences") {
+                ToggleSettingRow(
+                    label = "Dark Mode",
+                    checked = state.isDarkMode,
+                    onCheckedChange = { viewModel.onDarkModeToggled(it) }
+                )
+                Divider(color = colorScheme.outlineVariant.copy(alpha = 0.2f))
+                ToggleSettingRow(
+                    label = "Budget Alert Notifications",
+                    checked = state.budgetAlertsEnabled,
+                    onCheckedChange = { viewModel.onBudgetAlertsToggled(it) }
+                )
+            }
 
+            // GROUP 2: Currency
+            SettingsGroupCard(title = "Currency") {
                 var expanded by remember { mutableStateOf(false) }
 
                 ExposedDropdownMenuBox(
@@ -91,14 +95,20 @@ fun SettingsScreen(
                         readOnly = true,
                         label = { Text("Select Currency") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        shape = MaterialTheme.shapes.large, // Using Shape.kt Large
                         modifier = Modifier
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = colorScheme.secondary,
+                            unfocusedBorderColor = colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
                     )
 
                     ExposedDropdownMenu(
                         expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                        onDismissRequest = { expanded = false },
+                        scrollState = rememberScrollState()
                     ) {
                         SupportedCurrency.entries.forEach { currency ->
                             DropdownMenuItem(
@@ -112,56 +122,39 @@ fun SettingsScreen(
                     }
                 }
             }
-        }
 
-        // GROUP 3: Monthly Budget
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Monthly Budget Limits", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
+            // GROUP 3: Monthly Budget
+            SettingsGroupCard(title = "Monthly Budget Limits") {
+                SettingsTextField(
                     value = state.minBudget,
+                    label = "Minimum Budget",
                     onValueChange = { viewModel.onMinBudgetChanged(it) },
-                    label = { Text("Minimum Budget") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    leadingIcon = { Text(state.currency.symbol) },
-                    modifier = Modifier.fillMaxWidth()
+                    symbol = state.currency.symbol
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingsTextField(
                     value = state.maxBudget,
+                    label = "Maximum Budget",
                     onValueChange = { viewModel.onMaxBudgetChanged(it) },
-                    label = { Text("Maximum Budget") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    leadingIcon = { Text(state.currency.symbol) },
-                    modifier = Modifier.fillMaxWidth()
+                    symbol = state.currency.symbol
                 )
             }
-        }
 
-        // GROUP 4: About & Links
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("About", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(8.dp))
+            // GROUP 4: About & Links
+            SettingsGroupCard(title = "About") {
+                SettingsTextButton("Terms of Service") { /* Navigate */ }
+                SettingsTextButton("Privacy Policy") { /* Navigate */ }
+                SettingsTextButton("Help & Support") { /* Navigate */ }
 
-                TextButton(onClick = { /* Navigate to Terms */ }) { Text("Terms of Service") }
-                TextButton(onClick = { /* Navigate to Privacy */ }) { Text("Privacy Policy") }
-                TextButton(onClick = { /* Navigate to Help */ }) { Text("Help & Support") }
-
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "FlipFinance Version 1.0.0",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 12.dp)
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp, start = 4.dp)
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(100.dp))
+        }
     }
 }

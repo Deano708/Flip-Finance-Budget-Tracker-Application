@@ -21,7 +21,12 @@ import com.example.flipfinance.ui.screens.Auth.RegisterScreen
 import com.example.flipfinance.ui.screens.Profile.ProfileScreen
 import com.example.flipfinance.ViewModel.AuthEvent
 import androidx.compose.animation.ExitTransition
+import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.ui.screens.Profile.ChangeCredentialsScreen
+import com.example.flipfinance.ui.screens.Settings.SettingsScreen
+import com.example.flipfinance.ui.screens.Transaction.AddTransactionScreen
+import com.example.flipfinance.ui.screens.Transaction.TransactionScreen
+
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
    Author: Easy Tuto
@@ -86,10 +91,19 @@ fun NavGraph(
         }
 
         composable(Screen.Transactions.route) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Transaction Screen")
-            }
+            // Hilt handles the factory and injection automatically here
+            val transactionViewModel: TransactionViewModel = hiltViewModel()
+
+            TransactionScreen(
+                viewModel = transactionViewModel,
+                navController = navController,
+                onTransactionClick = { transaction ->
+                    // Handle click (e.g., navigate to detail or show a toast)
+                    println("Selected: ${transaction.title}")
+                }
+            )
         }
+
 
         composable(Screen.Streak.route) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -98,9 +112,7 @@ fun NavGraph(
         }
 
         composable(Screen.Settings.route) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Settings Screen")
-            }
+            SettingsScreen()
         }
 
         composable(Screen.Profile.route) {
@@ -119,5 +131,14 @@ fun NavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        composable(Screen.AddTransaction.route) {
+            val transactionViewModel: TransactionViewModel = hiltViewModel()
+            AddTransactionScreen(
+                viewModel = transactionViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
     }
 }
