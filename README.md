@@ -143,4 +143,3 @@ The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules o
 - [x] Reactive Finance Summary Card (Income/Expense totals).
 - [x] Global Multi-Currency and Dark Mode support.
 - [x] Interactive spending analytics with MPAndroidChart.
-- [ ] **Next**: Interactive spending analytics with MPAndroidChart.
