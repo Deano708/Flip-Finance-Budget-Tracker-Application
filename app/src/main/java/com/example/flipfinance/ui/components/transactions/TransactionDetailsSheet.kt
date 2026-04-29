@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,6 +107,8 @@ fun TransactionDetailsSheet(
     var showReceipt by remember { mutableStateOf(false) }
     var showFullImage by remember { mutableStateOf(false) }
 
+    val colorScheme = MaterialTheme.colorScheme
+
     val context = LocalContext.current
 
     Column(
@@ -117,43 +120,45 @@ fun TransactionDetailsSheet(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // expense and income Badge (at the top of the page)
+        val isExpense = transaction.expenseType == "Expense"
         Surface(
-            color = if (transaction.expenseType == "Expense") Color(0xFFFFC1C1) else Color(0xFFB4D9BC),
-            shape = RoundedCornerShape(8.dp)
+            color = if (isExpense) colorScheme.errorContainer else colorScheme.primary,
+            shape = MaterialTheme.shapes.small
         ) {
             Text(
                 text = transaction.expenseType,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                style = MaterialTheme.typography.labelLarge
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = if (isExpense) colorScheme.onError else colorScheme.onPrimary
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Allows user to change transaction title.
-        OutlinedTextField(
+        DetailsTextField(
             value = title,
             onValueChange = { title = it },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            label = "Transaction Title"
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         // allows them to alter amounts and the date of transaction
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            DetailsTextField(
                 value = "R $amount",
                 onValueChange = { amount = it.replace("R ", "") },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                label = "Amount"
             )
-            OutlinedTextField(
+            DetailsTextField(
                 value = formatTransactionDate(transaction.date),
                 onValueChange = {},
                 modifier = Modifier.weight(1f),
                 enabled = false,
-                shape = RoundedCornerShape(12.dp)
+                label = "Date"
             )
         }
 
@@ -161,31 +166,31 @@ fun TransactionDetailsSheet(
 
         // Category to allow the user to pick transaction category
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
+            DetailsTextField(
                 value = transaction.expenseCategory,
                 onValueChange = {},
                 modifier = Modifier.weight(1f),
                 enabled = false,
-                shape = RoundedCornerShape(12.dp)
+                label = "Category"
             )
-            OutlinedTextField(
+            DetailsTextField(
                 value = formatTransactionTime(transaction.date),
                 onValueChange = {},
                 modifier = Modifier.weight(1f),
                 enabled = false,
-                shape = RoundedCornerShape(12.dp)
+                label = "Time"
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         // Notes Area
-        OutlinedTextField(
+        DetailsTextField(
             value = description,
             onValueChange = { description = it },
-            modifier = Modifier.fillMaxWidth().height(100.dp),
-            shape = RoundedCornerShape(12.dp),
-            label = { Text("Notes") }
+            modifier = Modifier.fillMaxWidth().height(120.dp),
+            label = "Notes",
+            singleLine = false
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -195,6 +200,7 @@ fun TransactionDetailsSheet(
             Text(
                 text = "Attached Receipt",
                 style = MaterialTheme.typography.labelMedium,
+                color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
             )
 
@@ -215,25 +221,40 @@ fun TransactionDetailsSheet(
 
         // Action Buttons
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            // Delete Button
             Button(
                 onClick = onDelete,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE55A5A)),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier.weight(1f).height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorScheme.errorContainer,
+                    contentColor = colorScheme.onErrorContainer
+                ),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text("Delete")
+                Text("Delete", fontWeight = FontWeight.Bold)
             }
+
+            // Edit Button
             Button(
                 onClick = {
-                    onEdit(transaction.copy(title = title, amount = amount.toDoubleOrNull() ?: 0.0, description = description))
+                    onEdit(transaction.copy(
+                        title = title,
+                        amount = amount.toDoubleOrNull() ?: 0.0,
+                        description = description
+                    ))
                 },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC75F)),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier.weight(1f).height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorScheme.secondary,
+                    contentColor = colorScheme.onSecondary
+                ),
+                shape = MaterialTheme.shapes.medium
             ) {
-                Text("Edit", color = Color.Black)
+                Text("Update", fontWeight = FontWeight.Bold)
             }
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Inside TransactionDetailsSheet
         if (transaction.receiptUrl != null) {

@@ -236,8 +236,10 @@ fun TransactionScreen(
             ModalBottomSheet(
                 onDismissRequest = { showSheet = false },
                 sheetState = sheetState,
-                containerColor = Color.White,
-                dragHandle = { BottomSheetDefaults.DragHandle() }
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                dragHandle = { BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                ) }
             ) {
                 TransactionDetailsSheet(
                     transaction = selectedTransaction!!,
