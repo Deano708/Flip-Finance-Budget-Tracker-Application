@@ -97,8 +97,9 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
     - Download the `google-services.json` and place it in the `app/` directory.
     - Enable **Email/Password** authentication in the Firebase Auth settings.
 3. **Supabase Setup**:
-    - Create a bucket named `RecieptStorage` in your Supabase project.
+    - Create a buckets named `RecieptStorage` and `avatars` in your Supabase project.
     - Ensure public access or appropriate RLS policies are set for receipt retrieval.
+    - Insert your SUPABASE_URL and SUPABASE_KEY into local.properties and supabase clients respectively. 
 4. **Build**:
     - Open the project in **Android Studio (Ladybug or newer)**.
     - Sync Gradle and run the app on an emulator or physical device.
