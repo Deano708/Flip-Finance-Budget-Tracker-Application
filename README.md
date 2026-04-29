@@ -109,6 +109,11 @@ The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules o
 - **Screen**: A sealed class hierarchy defining routes, titles, and icons for type-safe navigation.
 - **Persistent Preferences**: Leverages **Jetpack DataStore** to ensure the onboarding experience is only displayed on the first launch or until successfully completed.
 
+### Settings Management
+- **SettingsPreference**: Manages dark/light theme user preference, currency and budget limit and notifications.
+- **Settings ViewModel**: Logic layer acting as middleman between UI and storage.
+- **Settings Page**: Visual screen for settings budget limits, currency icons and theme toggle.
+
 ---
 
 ## Setup & Installation
