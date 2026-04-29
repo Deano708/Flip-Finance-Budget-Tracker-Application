@@ -3,6 +3,7 @@ package com.example.flipfinance.ui.screens.Transaction
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +20,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -127,7 +131,7 @@ fun AddTransactionScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onNavigateBack) {
-                    Text("Cancel", color = Color.Red)
+                    Text("Cancel", color = colorScheme.error)
                 }
                 Text("Add Transaction", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 TextButton(onClick = {
@@ -148,7 +152,7 @@ fun AddTransactionScreen(
                         onNavigateBack()
                     }
                 }) {
-                    Text("Save", fontWeight = FontWeight.Bold)
+                    Text("Save", fontWeight = FontWeight.Bold, color = colorScheme.primary)
                 }
             }
         }
@@ -157,7 +161,7 @@ fun AddTransactionScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             // Expense/Income Toggle
@@ -167,11 +171,13 @@ fun AddTransactionScreen(
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Details", color = Color.Gray)
+            Text("Details", color = colorScheme.onSurfaceVariant)
 
             // Details Card
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                shape = MaterialTheme.shapes.medium, // Align with Shape.kt
+                border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f)),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             ) {
                 Column(Modifier.padding(16.dp)) {
@@ -182,20 +188,27 @@ fun AddTransactionScreen(
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
+                            focusedTextColor = colorScheme.onSurface,
+                            unfocusedTextColor = colorScheme.onSurface,
+                            cursorColor = colorScheme.secondary
                         )
                     )
+
+                    Divider(color = colorScheme.outlineVariant.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 8.dp))
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(currencySymbol, style = MaterialTheme.typography.titleLarge) //dynamic currency symbol
+                        Text(currencySymbol, style = MaterialTheme.typography.headlineMedium, color = colorScheme.primary) //dynamic currency symbol
                         TextField(
                             value = amount,
                             onValueChange = { amount = it },
                             placeholder = { Text("Amount") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            textStyle = MaterialTheme.typography.headlineMedium.copy(color = colorScheme.onSurface),
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
+                                focusedTextColor = colorScheme.onSurface,
+                                unfocusedTextColor = colorScheme.onSurface
                             )
                         )
                     }
@@ -203,42 +216,46 @@ fun AddTransactionScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Category", color = Color.Gray)
+            Text("Category", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
             CategoryDropdown(selectedCategory) { selectedCategory = it }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Receipt (Optional)", color = Color.Gray)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("Receipt (Optional)", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(80.dp) // Slightly smaller to fit with your Notes field
                     .padding(vertical = 4.dp)
                     .clickable { launcher.launch("image/*") },
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
-                shape = RoundedCornerShape(12.dp)
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f))
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     if (selectedImageUri != null) {
-                        Text("Receipt Attached ✅", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
+                        Text("Receipt Attached", color = colorScheme.primary, fontWeight = FontWeight.Bold)
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Note: You may need to import Icons.Default.AddAPhoto
-                            Text("Tap to add receipt", color = Color.Gray)
+                            Text("Tap to add receipt", color = colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Notes", color = Color.Gray)
+            Text("Notes", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
                 modifier = Modifier.fillMaxWidth().height(150.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = MaterialTheme.shapes.medium,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorScheme.secondary,
+                    unfocusedBorderColor = colorScheme.outlineVariant.copy(alpha = 0.3f)
+                )
             )
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

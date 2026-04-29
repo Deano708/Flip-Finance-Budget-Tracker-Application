@@ -1,5 +1,7 @@
 package com.example.flipfinance.ui.components.transactions
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 
 /*
    Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
@@ -62,10 +65,13 @@ import androidx.compose.material3.Icon
 fun CategoryDropdown(selectedCategory: String, onCategorySelected: (String) -> Unit) {
     val categories = listOf("Food", "Transport", "Rent", "Salary", "Utilities", "Other")
     var expanded by remember { mutableStateOf(false) }
+    val colorScheme = MaterialTheme.colorScheme
 
     Box {
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+            shape = MaterialTheme.shapes.medium, // 16.dp from Shape.kt
+            border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { expanded = true }
@@ -75,14 +81,15 @@ fun CategoryDropdown(selectedCategory: String, onCategorySelected: (String) -> U
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Category", color = Color.Black)
+                Text("Category", color = colorScheme.onSurface)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(selectedCategory, color = Color.LightGray)
+                    Text(selectedCategory, color = colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.Default.UnfoldMore, // You'll need Icons.Default.UnfoldMore
                         contentDescription = null,
-                        tint = Color.Gray
+                        tint = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -90,11 +97,12 @@ fun CategoryDropdown(selectedCategory: String, onCategorySelected: (String) -> U
 
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(colorScheme.surface)
         ) {
             categories.forEach { category ->
                 DropdownMenuItem(
-                    text = { Text(category) },
+                    text = { Text(category, color = colorScheme.onSurface) },
                     onClick = {
                         onCategorySelected(category)
                         expanded = false

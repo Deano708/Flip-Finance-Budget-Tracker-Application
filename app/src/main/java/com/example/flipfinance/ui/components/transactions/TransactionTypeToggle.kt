@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,28 +46,47 @@ import androidx.compose.ui.unit.dp
 //method to be used to toggle between the expense and income category.
 @Composable
 fun TransactionTypeToggle(selectedType: String, onTypeSelected: (String) -> Unit) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(50.dp)
-            .background(Color(0xFFF1F1F1), RoundedCornerShape(25.dp))
+            .background(
+                color = colorScheme.outlineVariant.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(27.dp)
+            )
             .padding(4.dp)
     ) {
         listOf("Expense", "Income").forEach { type ->
             val isSelected = selectedType == type
+            val isIncomeType = type == "Income"
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .background(
-                        if (isSelected) (if (type == "Income") Color(0xFFB4D9BC) else Color.White)
-                        else Color.Transparent,
-                        RoundedCornerShape(20.dp)
+                        color = when {
+                            isSelected && isIncomeType -> colorScheme.primary
+                            isSelected && !isIncomeType -> colorScheme.error
+                            else -> Color.Transparent
+                        },
+                        shape = RoundedCornerShape(23.dp)
                     )
+                    .clip(RoundedCornerShape(23.dp))
                     .clickable { onTypeSelected(type) },
                 contentAlignment = Alignment.Center
             ) {
-                Text(type, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                Text(
+                    text = type,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                    color = when {
+                        isSelected && isIncomeType -> colorScheme.onPrimary
+                        isSelected && !isIncomeType -> colorScheme.onSecondary
+                        else -> colorScheme.onSurfaceVariant
+                    }
+                )
             }
         }
     }
