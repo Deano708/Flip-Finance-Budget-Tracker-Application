@@ -103,6 +103,8 @@ The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules o
 - **Profile Synchronization**: The AuthViewModel reactively fetches user metadata (`First Name`, `Last Name`). from **Firebase Realtime Database** upon successful authentication, ensuring the UI is personalized to the specific user session.
 - **Settings State Machine**: Uses a dedicated `SettingsViewModel` to expose a single `uiState` representing the user's localized preferences, reducing the complexity of managing global configurations.
 - **Numeric Localization**: Employs `Locale.ENGLISH` formatting for all monetary calculations to ensure decimal precision and consistency across different Android system locales.
+- **Profile Photo Management**: Uses Coil's `AsyncImage` composable for successful remote image loading, integrates `Supabase Storage` for profile photo uploads, and stores the returned public URL in `Firebase Realtime Database` under the node of the authenticated user.
+- **Credential Management**: Allows authenticated users to update their first name, last name and password using a `Change Credentials screen, with changes saved to `Firebase Realtime Database` and `Firebase Authentication` respectively, with field level validation and confirmation before saving.
 
 ### Navigation Routing
 - **MainActivity**: Acts as the single entry point, observing both `currentUser` and `hasCompletedOnboarding` states to determine the UI entry point.
