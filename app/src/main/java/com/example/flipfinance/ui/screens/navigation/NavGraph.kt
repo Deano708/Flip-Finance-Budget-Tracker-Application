@@ -26,6 +26,8 @@ import com.example.flipfinance.ui.screens.Profile.ChangeCredentialsScreen
 import com.example.flipfinance.ui.screens.Settings.SettingsScreen
 import com.example.flipfinance.ui.screens.Transaction.AddTransactionScreen
 import com.example.flipfinance.ui.screens.Transaction.TransactionScreen
+// Homescreen
+import com.example.flipfinance.ui.screens.Home.HomeScreen
 
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
@@ -100,6 +102,21 @@ fun NavGraph(
                 onTransactionClick = { transaction ->
                     // Handle click (e.g., navigate to detail or show a toast)
                     println("Selected: ${transaction.title}")
+                }
+            )
+        }
+
+        composable(Screen.Home.route) {
+            // Hilt handles the factory and injection automatically here
+            val transactionViewModel: TransactionViewModel = hiltViewModel()
+
+            HomeScreen(
+                viewModel = hiltViewModel(),
+                onNavigateToAdd = {
+                    navController.navigate("add_transaction")
+                },
+                onNavigateToAnalytics = {
+                    navController.navigate(Screen.Transactions.route)
                 }
             )
         }
