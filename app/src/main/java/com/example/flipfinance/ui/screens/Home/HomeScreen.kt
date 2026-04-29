@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.flipfinance.ViewModel.AuthViewModel
 import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.ui.home.extractNameFromEmail
@@ -26,10 +27,15 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     transactionViewModel: TransactionViewModel = hiltViewModel(),
-    settingsViewModel: SettingsViewModel = hiltViewModel(), // Injected SettingsViewModel
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     onNavigateToAdd: () -> Unit,
     onNavigateToAnalytics: () -> Unit
 ) {
+    // For Home
+    val userProfile by authViewModel.userProfile.collectAsState()
+    val firstName = userProfile?.firstName ?: "User"
+
     // Transaction Data
     val transactions by transactionViewModel.transactions.collectAsState()
     val totalSpent by transactionViewModel.totalSpentThisMonth.collectAsState()
@@ -73,7 +79,7 @@ fun HomeScreen(
 
                 // 1. Greeting Section
                 item {
-                    GreetingSection(greeting, userName)
+                    GreetingSection(greeting, firstName)
                 }
 
                 // 2. Main Budget Card (Updated with dynamic currency and budget)

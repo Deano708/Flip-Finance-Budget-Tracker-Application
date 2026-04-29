@@ -40,6 +40,24 @@ import com.example.flipfinance.ui.theme.PrimaryGreen
 import com.example.flipfinance.ui.theme.SecondaryGold
 import java.util.Locale
 
+//Title: Material Design 3 - Cards
+//Author: Google
+//Date: 2024
+//Date accessed: 29 April 2026
+//Availability: https://m3.material.io/components/cards/overview
+
+//Title: Layouts in Jetpack Compose
+//Author: Android Developers Documentation
+//Date: 2024
+//Date accessed: 29 April 2026
+//Availability: https://developer.android.com/develop/ui/compose/layouts
+
+//Title: Graphics in Jetpack Compose (Brushes and Gradients)
+//Author: Google
+//Date: 2024
+//Date accessed: 29 April 2026
+//Availability: https://developer.android.com/develop/ui/compose/graphics/draw/modifiers#brush
+
 // handles the icon and the personalized Morning text
 @Composable
 fun GreetingSection(greeting: String, userName: String) {
