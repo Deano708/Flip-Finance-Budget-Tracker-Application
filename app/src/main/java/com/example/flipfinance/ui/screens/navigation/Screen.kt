@@ -4,7 +4,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -18,8 +20,8 @@ sealed class Screen(val route: String, val title: String? = null, val icon: Imag
     // Main App Routes
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Transactions : Screen("transactions", "Transact", Icons.Default.CreditCard)
-    object Streak : Screen("streak", "Streak", Icons.Default.Crop)
-    object Settings : Screen("settings", "Settings", Icons.Default.Crop)
+    object Streak : Screen("streak", "Streak", Icons.Default.LocalFireDepartment)
+    object Settings : Screen("settings", "Settings", Icons.Default.Settings)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
     object ChangeCredentials : Screen("change_credentials", "Change Credentials")
 

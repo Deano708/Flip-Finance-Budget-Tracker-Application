@@ -97,6 +97,7 @@ import java.util.Locale
 fun TransactionDetailsSheet(
     transaction: Transaction,
     onDelete: () -> Unit,
+    currencySymbol: String,
     onEdit: (Transaction) -> Unit
 ) {
     // variables with current transaction data
@@ -143,8 +144,8 @@ fun TransactionDetailsSheet(
         // allows them to alter amounts and the date of transaction
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
-                value = "R $amount",
-                onValueChange = { amount = it.replace("R ", "") },
+                value = "$currencySymbol $amount",
+                onValueChange = { amount = it.replace("$currencySymbol ", "") },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             )
