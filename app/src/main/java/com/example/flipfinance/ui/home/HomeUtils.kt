@@ -1,5 +1,11 @@
 package com.example.flipfinance.ui.home
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+
 fun getGreeting(): String {
     val hour = java.util.Calendar.getInstance()
 
@@ -24,4 +30,5 @@ fun extractNameFromEmail(email: String?): String {
     return namePart.replaceFirstChar {
         it.uppercase()
     }
+
 }
