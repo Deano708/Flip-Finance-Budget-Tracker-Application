@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ui.theme.PrimaryGreen
 import com.example.flipfinance.ui.theme.SecondaryGold
+import java.util.Locale
 
 // handles the icon and the personalized Morning text
 @Composable
