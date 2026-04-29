@@ -2,6 +2,7 @@ package com.example.flipfinance.data.remote
 
 import com.example.flipfinance.domain.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -36,9 +37,9 @@ import com.example.flipfinance.domain.model.User
    Availability: https://youtu.be/nVhPqPpgndM?si=-2e5lkDbB83rUAoS
 */
 
-
 class FirebaseAuthRepository @Inject constructor(
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val firebaseDatabase: FirebaseDatabase
 ) : AuthRepository {
 
     override val currentUser: Flow<User?> = callbackFlow {
@@ -55,17 +56,39 @@ class FirebaseAuthRepository @Inject constructor(
         Unit
     }
 
-    override suspend fun register(email: String, pass: String): Result<Unit> = runCatching {
-        firebaseAuth.createUserWithEmailAndPassword(email, pass).await()
+    // Creates the Auth account then saves firstName/lastName to Realtime Database
+    override suspend fun register(
+        email: String,
+        pass: String,
+        firstName: String,
+        lastName: String
+    ): Result<Unit> = runCatching {
+        val result = firebaseAuth.createUserWithEmailAndPassword(email, pass).await()
+        val uid = result.user?.uid ?: throw IllegalStateException("Registration failed — no user returned")
+
+        // Save name fields to Database under users/{uid}
+        firebaseDatabase.reference
+            .child("users")
+            .child(uid)
+            .updateChildren(
+                mapOf(
+                    "firstName" to firstName.trim(),
+                    "lastName" to lastName.trim()
+                )
+            ).await()
         Unit
     }
 
     override fun logout() = firebaseAuth.signOut()
 
-    // Reset Password
+    override suspend fun deleteAccount(): Result<Unit> = runCatching {
+        firebaseAuth.currentUser?.delete()?.await()
+            ?: throw IllegalStateException("No authenticated user")
+        Unit
+    }
+
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> = runCatching {
         firebaseAuth.sendPasswordResetEmail(email).await()
         Unit
     }
-
 }

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -37,12 +38,12 @@ fun TransactionSearchBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text("Search Transactions", color = Color.Gray) },
+        placeholder = { Text("Search Transactions", color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = null,
-                tint = Color.Gray
+                tint = colorScheme.onSurfaceVariant
             )
         },
         trailingIcon = {
@@ -51,17 +52,24 @@ fun TransactionSearchBar(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Clear",
-                        tint = Color.Gray
+                        tint = colorScheme.onSurfaceVariant
                     )
                 }
             }
         },
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color(0xFFF1F1F1),
-            focusedContainerColor = Color(0xFFF9F9F9),
-            unfocusedContainerColor = Color(0xFFF9F9F9)
+            // Active State
+            focusedBorderColor = colorScheme.secondary,
+            unfocusedBorderColor = colorScheme.outlineVariant.copy(alpha = 0.3f),
+
+            focusedContainerColor = colorScheme.surface,
+            unfocusedContainerColor = colorScheme.surface,
+
+            // Text Colours
+            focusedTextColor = colorScheme.onSurface,
+            unfocusedTextColor = colorScheme.onSurface,
+            cursorColor = colorScheme.secondary
         ),
         singleLine = true
     )
