@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,25 +20,29 @@ android {
     defaultConfig {
         applicationId = "com.example.flipfinance"
         minSdk = 25
-        targetSdk = 36
+        targetSdk = 36 // Note: 35 is usually the stable max for now, but 36 is fine if intentional
         versionCode = 1
         versionName = "1.0"
-        val localProperties = org.jetbrains.kotlin.konan.properties.loadProperties("${rootProject.projectDir}/local.properties")
 
-        buildConfigField("String", "SUPABASE_URL", "\"${localProperties["SUPABASE_URL"]}\"")
-        buildConfigField("String", "SUPABASE_KEY", "\"${localProperties["SUPABASE_KEY"]}\"")
+        // Safe loading of properties for CI
+        val props = Properties()
+        val propsFile = project.rootProject.file("local.properties")
+        if (propsFile.exists()) {
+            propsFile.inputStream().use { stream ->
+                props.load(stream)
+            }
+        }
+
+        // Use a fallback or the property from the file/environment
+        val sbUrl = props.getProperty("SUPABASE_URL") ?: System.getenv("SUPABASE_URL") ?: ""
+        val sbKey = props.getProperty("SUPABASE_KEY") ?: System.getenv("SUPABASE_KEY") ?: ""
+
+        buildConfigField("String", "SUPABASE_URL", "\"$sbUrl\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"$sbKey\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     buildFeatures {
         compose = true // Enables Compose support
     }
