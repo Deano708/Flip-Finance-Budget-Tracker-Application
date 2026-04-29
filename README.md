@@ -12,6 +12,11 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 - **Self-Service Password Recovery**: Integrated "Forgot Password" flow utilizing Firebase's secure email reset system.
 - **First-Launch Experience**: A high-fidelity, 3-screen interactive onboarding pager designed to introduce core value propositions.
 
+### Global Settings & Personalization
+- **Multi-Currency Support**: A centralized preference system allowing users to toggle between international currency symbols (ZAR, USD, EUR, GBP). This state is injected globally, ensuring every financial string in the app updates reactively.
+- **Dynamic Greeting System**: Implements time-aware logic to provide contextual greetings (Morning/Afternoon/Evening) paired with adaptive iconography.
+- **Persistence-Driven Dark Mode**: Integrates Jetpack DataStore with the Material 3 ColorScheme to provide a persistent Dark Theme that respects user choice across application restarts.
+
 ### Transaction Management & Analytics
 - **Local Persistence**: Full CRUD operations powered by **RoomDB SQLite**, ensuring data is accessible offline.
 - **Multi-Cloud Hybrid Storage**: Transaction metadata is stored locally, while physical receipt images are securely offloaded to **Supabase Storage**.
@@ -53,6 +58,17 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 
 ---
 
+## HCI & Usability Principles
+The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules of Interface Design to ensure superior User Experience (UX):
+
+### Modern Design System
+- **Strive for Consistency**: Universal application of currency symbols, padding constants, and iconographic metaphors across the Home, Transactions, and Settings modules.
+- **Offer Informative Feedback**: The Budget Progress Card provides immediate visual status of monthly spending. The progress bar utilizes semantic coloring, transitioning to an **Error** state (Red) once the user exceeds 80% of their defined budget.
+- **Enable Frequent Users to Use Shortcuts**: Navigation is optimized through a persistent Bottom Bar and a prominent Floating Action Button (FAB) for the most frequent task: adding a transaction.
+- **Reduce Short-term Memory Load**: Adheres to the **Recognition** over **Recall** principle by using distinct, category-specific icons and color-coding income (Green) vs. expenses (Red), allowing users to process financial health at a glance.
+
+---
+
 ## Tech Stack
 
 | Category | Technology |
@@ -82,6 +98,11 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 - **TransactionViewModel**: Uses `StateFlow` and `SharingStarted.WhileSubscribed` to provide an efficient, lifecycle-aware stream of filtered data to the UI.
 - **Dynamic Aggregation**: Leverages Kotlin's sumOf within reactive remember blocks to calculate filtered financial totals without manual list traversals.
 - **Supabase Integration**: Implements a `NonCancellable` coroutine context for receipt uploads to ensure data integrity during network transitions.
+
+### Profile & Preference Management
+- **Profile Synchronization**: The AuthViewModel reactively fetches user metadata (`First Name`, `Last Name`). from **Firebase Realtime Database** upon successful authentication, ensuring the UI is personalized to the specific user session.
+- **Settings State Machine**: Uses a dedicated `SettingsViewModel` to expose a single `uiState` representing the user's localized preferences, reducing the complexity of managing global configurations.
+- **Numeric Localization**: Employs `Locale.ENGLISH` formatting for all monetary calculations to ensure decimal precision and consistency across different Android system locales.
 
 ### Navigation Routing
 - **MainActivity**: Acts as the single entry point, observing both `currentUser` and `hasCompletedOnboarding` states to determine the UI entry point.
@@ -120,4 +141,6 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 - [x] Supabase integration for receipt image storage.
 - [x] Advanced Search and Category Filtering.
 - [x] Reactive Finance Summary Card (Income/Expense totals).
+- [x] Global Multi-Currency and Dark Mode support.
+- [x] Interactive spending analytics with MPAndroidChart.
 - [ ] **Next**: Interactive spending analytics with MPAndroidChart.
