@@ -50,7 +50,7 @@ import com.example.flipfinance.data.local.Entities.Transaction
 */
 
 @Composable
-fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
+fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: () -> Unit) {
 
     // Get colors from the Theme
     val colorScheme = MaterialTheme.colorScheme
@@ -107,7 +107,7 @@ fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
                 // Amount and Type Indicator
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "${if (isIncome) "+" else "-"} R${String.format("%.2f", transaction.amount)}",
+                        text = "${if (isIncome) "+" else "-"} $currencySymbol ${String.format("%.2f", transaction.amount)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (isIncome) colorScheme.primary else colorScheme.onSurface

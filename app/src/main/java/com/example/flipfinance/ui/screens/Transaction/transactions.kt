@@ -225,6 +225,7 @@ fun TransactionScreen(
                         items(transactions) { transaction ->
                             TransactionItem(
                                 transaction = transaction,
+                                currencySymbol = currencySymbol,
                                 onClick = {
                                     selectedTransaction = transaction
                                     showSheet = true
