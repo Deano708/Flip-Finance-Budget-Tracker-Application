@@ -1,11 +1,8 @@
 package com.example.flipfinance.ui.screens.Profile
 
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,15 +21,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.flipfinance.ViewModel.ProfileEvent
 import com.example.flipfinance.ViewModel.ProfileViewModel
 import com.example.flipfinance.ui.theme.ErrorRed
@@ -53,8 +49,6 @@ fun ProfileScreen(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-
-    // Holds the Uri of the temp file we create for the camera to write into
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
 
     // Gallery picker launcher
@@ -64,17 +58,15 @@ fun ProfileScreen(
         uri?.let { viewModel.onEvent(ProfileEvent.UploadPhoto(it)) }
     }
 
-    // Camera launcher — writes full-resolution photo to our temp file Uri
+    // Camera launcher
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            // The camera wrote to cameraImageUri — pass it to the ViewModel
             cameraImageUri?.let { viewModel.onEvent(ProfileEvent.UploadPhoto(it)) }
         }
     }
 
-    // Creates a temp file in cache/camera/ and returns a FileProvider Uri for it
     fun createCameraUri(): Uri {
         val cameraDir = File(context.cacheDir, "camera").apply { mkdirs() }
         val photoFile = File.createTempFile("photo_", ".jpg", cameraDir)
@@ -99,7 +91,6 @@ fun ProfileScreen(
         }
     }
 
-    // Delete confirmation dialog
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -114,14 +105,11 @@ fun ProfileScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
             }
         )
     }
 
-    // Logout confirmation dialog
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -136,9 +124,7 @@ fun ProfileScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -153,7 +139,6 @@ fun ProfileScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-
             // ── Header ───────────────────────────────────────────────────
             Surface(
                 color = MaterialTheme.colorScheme.surface,
@@ -177,10 +162,9 @@ fun ProfileScreen(
                     Box(contentAlignment = Alignment.Center) {
                         val photoUrl = userProfile?.photoUrl
                         if (photoUrl != null) {
-                            val imageBytes = Base64.decode(photoUrl, Base64.DEFAULT)
-                            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
+                            // Load image from Supabase public URL using Coil
+                            AsyncImage(
+                                model = photoUrl,
                                 contentDescription = "Profile photo",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -188,6 +172,7 @@ fun ProfileScreen(
                                     .clip(CircleShape)
                             )
                         } else {
+                            // Initials fallback
                             val initials = buildString {
                                 userProfile?.firstName?.firstOrNull()?.let { append(it.uppercaseChar()) }
                                 userProfile?.lastName?.firstOrNull()?.let { append(it.uppercaseChar()) }
@@ -236,7 +221,6 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Take photo — opens camera via FileProvider Uri
                         OutlinedButton(
                             onClick = {
                                 val uri = createCameraUri()
@@ -247,27 +231,18 @@ fun ProfileScreen(
                             shape = MaterialTheme.shapes.small,
                             enabled = !isUploading
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
+                            Icon(Icons.Default.CameraAlt, null, Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
                             Text("Take Photo", fontSize = 13.sp)
                         }
 
-                        // Upload photo — opens gallery
                         OutlinedButton(
                             onClick = { galleryLauncher.launch("image/*") },
                             modifier = Modifier.weight(1f),
                             shape = MaterialTheme.shapes.small,
                             enabled = !isUploading
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Upload,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
+                            Icon(Icons.Default.Upload, null, Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
                             Text("Upload Photo", fontSize = 13.sp)
                         }
@@ -282,9 +257,7 @@ fun ProfileScreen(
             Spacer(Modifier.height(8.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -303,9 +276,7 @@ fun ProfileScreen(
             Spacer(Modifier.height(8.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -412,12 +383,7 @@ private fun ActionRow(
                         .background(iconTint.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconTint,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Icon(icon, null, tint = iconTint, modifier = Modifier.size(16.dp))
                 }
                 Text(
                     text = label,
