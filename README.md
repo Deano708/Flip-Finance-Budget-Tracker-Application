@@ -16,6 +16,7 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 - **Local Persistence**: Full CRUD operations powered by **RoomDB SQLite**, ensuring data is accessible offline.
 - **Multi-Cloud Hybrid Storage**: Transaction metadata is stored locally, while physical receipt images are securely offloaded to **Supabase Storage**.
 - **Contextual Filtering**: A reactive filter system allowing users to toggle between Income/Expense types and specific categories (Food, Transport, etc.).
+- **Reactive Financial Summary**: A dynamic Finance Summary Card that provides real-time totals for income and expenses based on the active filter and search criteria.
 - **Real-Time Search**: High-performance transaction search implementation covering titles and descriptions using Kotlin Flow.
 - **Visualisation**: Grouped transaction history with sticky date headers and dynamic color-coding for financial health tracking.
 
@@ -79,6 +80,7 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 ### Data Management
 - **FlipFinanceDatabase**: A Room-managed singleton ensuring thread-safe access to user transaction history.
 - **TransactionViewModel**: Uses `StateFlow` and `SharingStarted.WhileSubscribed` to provide an efficient, lifecycle-aware stream of filtered data to the UI.
+- **Dynamic Aggregation**: Leverages Kotlin's sumOf within reactive remember blocks to calculate filtered financial totals without manual list traversals.
 - **Supabase Integration**: Implements a `NonCancellable` coroutine context for receipt uploads to ensure data integrity during network transitions.
 
 ### Navigation Routing
@@ -117,4 +119,5 @@ The application is built following **Clean Architecture** and **MVVM (Model-View
 - [x] RoomDB implementation for local expense persistence.
 - [x] Supabase integration for receipt image storage.
 - [x] Advanced Search and Category Filtering.
+- [x] Reactive Finance Summary Card (Income/Expense totals).
 - [ ] **Next**: Interactive spending analytics with MPAndroidChart.
