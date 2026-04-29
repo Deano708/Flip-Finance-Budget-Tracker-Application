@@ -51,15 +51,20 @@ import com.example.flipfinance.data.local.Entities.Transaction
 
 @Composable
 fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
+
+    // Get colors from the Theme
+    val colorScheme = MaterialTheme.colorScheme
+    val isIncome = transaction.expenseType == "Income"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp), // Subtle elevation for a "flat" modern look
-        border = BorderStroke(1.dp, Color(0xFFF1F1F1))
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp), // Subtle elevation for a flat modern look
+        border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f))
     ) {
             Row(modifier = Modifier
                 .padding(16.dp)
@@ -69,14 +74,14 @@ fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
                 // Category Icon
                 Surface(
                     modifier = Modifier.size(44.dp),
-                    color = if (transaction.expenseType == "Income") Color(0xFFB4D9BC) else Color(0xFFF5F5F5),
+                    color = if (isIncome) colorScheme.primary.copy(alpha = 0.15f) else colorScheme.error.copy(alpha = 0.15f), // Alpha 0.15f provides a subtle tinted background
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
                         imageVector = getCategoryIcon(transaction.expenseCategory),
                         contentDescription = null,
                         modifier = Modifier.padding(10.dp),
-                        tint = if (transaction.expenseType == "Income") Color(0xFF2E7D32) else Color.Black
+                        tint = if (isIncome) colorScheme.primary else colorScheme.error
                     )
                 }
 
@@ -88,24 +93,24 @@ fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
                         text = transaction.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = transaction.expenseCategory,
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
 
                 // Amount and Type Indicator
                 Column(horizontalAlignment = Alignment.End) {
-                    val isIncome = transaction.expenseType == "Income"
                     Text(
                         text = "${if (isIncome) "+" else "-"} R${String.format("%.2f", transaction.amount)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (isIncome) Color(0xFF2E7D32) else Color.Black
+                        color = if (isIncome) colorScheme.primary else colorScheme.onSurface
                     )
                     // Status Tag for Descriptions
                     if (transaction.description.isNotBlank()) {
@@ -113,7 +118,7 @@ fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
                             imageVector = Icons.Default.Notes,
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
-                            tint = Color.LightGray
+                            tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                     }
                 }
