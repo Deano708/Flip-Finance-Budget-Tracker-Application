@@ -14,6 +14,13 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
+/*
+   Title: Tutorial: Implement Firebase Realtime Database in your app using Jetpack Compose
+   Author: Daniel Atitienei (YouTube)
+   Date:  Nov 27, 2024
+   Date accessed: 29/04/2026
+   Availability: https://www.youtube.com/watch?v=9dODKQhGPm0
+*/
 class FirebaseProfileRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase,

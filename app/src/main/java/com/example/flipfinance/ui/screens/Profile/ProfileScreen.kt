@@ -34,6 +34,23 @@ import com.example.flipfinance.ViewModel.ProfileViewModel
 import com.example.flipfinance.ui.theme.ErrorRed
 import java.io.File
 
+/*
+   Title: Profile Screen with Image Upload
+   Author: ebadamZA
+   Date: 13 March 2026
+   Date accessed: 29/04/2026
+   Availability: https://github.com/PROG7313-2026-EMDBN/Sandbox.git
+*/
+
+/*
+   Title: THIS Is How You Use the New Android 13 Photo Picker (It's AMAZING!)
+   Author: Phillip Lackner
+   Date: Dec 14, 2022
+   Date accessed: 27/04/2026
+   Availability: https://www.youtube.com/watch?v=uHX5NB6wHao
+*/
+
+
 @Composable
 fun ProfileScreen(
     onNavigateToChangeCredentials: () -> Unit,
@@ -94,6 +111,7 @@ fun ProfileScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Delete Account", fontWeight = FontWeight.SemiBold) },
             text = { Text("This will permanently delete your account and all your data. This cannot be undone.") },
             confirmButton = {
@@ -113,6 +131,7 @@ fun ProfileScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Log Out", fontWeight = FontWeight.SemiBold) },
             text = { Text("Are you sure you want to log out?") },
             confirmButton = {
@@ -120,7 +139,7 @@ fun ProfileScreen(
                     showLogoutDialog = false
                     onLogout()
                 }) {
-                    Text("Log Out", fontWeight = FontWeight.SemiBold)
+                    Text("Log Out", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                 }
             },
             dismissButton = {

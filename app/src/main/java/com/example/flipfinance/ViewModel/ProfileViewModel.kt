@@ -13,11 +13,21 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/*
+   Title: State - Android Jetpack Compose - Part 6
+   Author: Phillip Lackner
+   Date: 5 years ago
+   Date accessed: 27/04/2026
+   Code version: 1
+   Availability: https://youtu.be/s3m1PSd7VWc?si=W9D10o-CFGRSg9Ex
+*/
+
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val repository: ProfileRepository
 ) : ViewModel() {
 
+    //Converts the repository flow into a StateFlow for the UI to observe
     val userProfile = repository.userProfile
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -39,7 +49,7 @@ class ProfileViewModel @Inject constructor(
     private val _updateSuccess = MutableStateFlow(false)
     val updateSuccess = _updateSuccess.asStateFlow()
 
-    fun onEvent(event: ProfileEvent) {
+    fun onEvent(event: ProfileEvent) {//Handles UI events and delegates to appropriate functions
         when (event) {
             is ProfileEvent.UploadPhoto -> uploadPhoto(event.uri)
             is ProfileEvent.ClearUploadError -> _uploadError.value = null
@@ -52,7 +62,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun uploadPhoto(uri: Uri) {
+    private fun uploadPhoto(uri: Uri) {//Manages the coroutine scope for uploading a photo
         viewModelScope.launch {
             _isUploading.value = true
             _uploadError.value = null
@@ -63,7 +73,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun updateCredentials(
+    private fun updateCredentials(//Manages the coroutine scope for updating user info
         firstName: String,
         lastName: String,
 
@@ -80,7 +90,7 @@ class ProfileViewModel @Inject constructor(
     }
 }
 
-sealed class ProfileEvent {
+sealed class ProfileEvent {//Defines all possible user actions in the Profile screen
     data class UploadPhoto(val uri: Uri) : ProfileEvent()
     data object ClearUploadError : ProfileEvent()
     data object ClearUploadSuccess : ProfileEvent()

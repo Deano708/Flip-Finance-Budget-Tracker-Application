@@ -17,6 +17,15 @@ import com.example.flipfinance.ViewModel.ProfileViewModel
 import com.example.flipfinance.ui.components.PrimaryButton
 import com.example.flipfinance.ui.components.PrimaryTextField
 
+/*
+Title: Disclosure of AI Usage in my Assessment.
+• Section: ChangeCredentialsScreen.
+• AI Tool: ChatGPT
+• Purpose/intention : Showing me a structure on how to create a screen where credentials can be changed
+• Date(s) 28/04/2026.
+• https://chatgpt.com/share/69f18741-043c-83ea-8773-2f9d1828e094
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangeCredentialsScreen(

@@ -6,6 +6,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
+/*
+   Title: Supabase Provider Client Setup
+   Author: ebAdamZA
+   Date: 13 March 2026
+   Date accessed: 29/04/2026
+   Code version: 1
+   Availability: https://github.com/PROG7313-2026-EMDBN/Sandbox.git
+*/
+
 class AvatarStorageService {
 
     private val bucketName = "avatars"
