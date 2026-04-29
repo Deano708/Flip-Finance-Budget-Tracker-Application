@@ -53,7 +53,7 @@ fun NavGraph(
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None }
     ) {
-        // Auth
+        // Auth Screen
         composable(Screen.Login.route) {
             LoginScreen(
                 viewModel = authViewModel,
@@ -88,15 +88,21 @@ fun NavGraph(
 
         // Main
         composable(Screen.Home.route) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Home Screen")
-            }
+            HomeScreen(
+                transactionViewModel = hiltViewModel<TransactionViewModel>(),
+                settingsViewModel = hiltViewModel<SettingsViewModel>(),
+                onNavigateToAdd = {
+                    navController.navigate(Screen.AddTransaction.route)
+                },
+                onNavigateToAnalytics = {
+                    navController.navigate(Screen.Transactions.route)
+                }
+            )
         }
 
         composable(Screen.Transactions.route) {
             // Hilt handles the factory and injection automatically here
             val transactionViewModel: TransactionViewModel = hiltViewModel()
-
             TransactionScreen(
                 viewModel = transactionViewModel,
                 navController = navController,
@@ -106,23 +112,6 @@ fun NavGraph(
                 }
             )
         }
-
-        composable(Screen.Home.route) {
-            // Hilt handles the factory and injection automatically here
-            val transactionViewModel: TransactionViewModel = hiltViewModel()
-
-            HomeScreen(
-                transactionViewModel = hiltViewModel<TransactionViewModel>(),
-                settingsViewModel = hiltViewModel<SettingsViewModel>(),
-                onNavigateToAdd = {
-                    navController.navigate("add_transaction")
-                },
-                onNavigateToAnalytics = {
-                    navController.navigate(Screen.Transactions.route)
-                }
-            )
-        }
-
 
         composable(Screen.Streak.route) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

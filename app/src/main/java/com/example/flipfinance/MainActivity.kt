@@ -100,6 +100,12 @@ class MainActivity : ComponentActivity() {
                                         popUpTo(0) { inclusive = true }
                                     }
                                 }
+                                // After login, takes you to homescreen.
+                                else if (currentUser != null && (currentRoute == null || currentRoute in authRoutes)) {
+                                    navController.navigate(Screen.Home.route) {
+                                        popUpTo(Screen.Login.route) { inclusive = true }
+                                    }
+                                }
                             }
 
                             Scaffold(

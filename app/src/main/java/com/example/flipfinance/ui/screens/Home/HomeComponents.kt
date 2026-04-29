@@ -75,7 +75,8 @@ fun GreetingSection(greeting: String, userName: String) {
 // card at the top. It uses a LinearProgressIndicator
 @Composable
 fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color, currencySymbol: String) {
-    val progress = (totalSpent / budget).toFloat().coerceIn(0f, 1f)
+    val progress = if (budget > 0) (totalSpent / budget).toFloat().coerceIn(0f, 1f) else 0f
+    val percentage = (progress * 100).toInt()
 
     val barColor = if (progress > 0.8f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     Card(
@@ -104,9 +105,8 @@ fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color, 
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Budget: $currencySymbol $budget", style = MaterialTheme.typography.labelSmall)
-                    Text("${(progress * 100).toInt()}% Used", style = MaterialTheme.typography.labelSmall)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Text("$percentage% Used", style = MaterialTheme.typography.labelSmall)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -191,6 +191,7 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String) {
                 color = Color.Gray
             )
 
+            Spacer(Modifier.weight(1f))
             Text(
                 text = "${if (isExpense) "-" else "+"} $currencySymbol ${String.format("%.2f", transaction.amount)}",
                 fontWeight = FontWeight.Bold,
