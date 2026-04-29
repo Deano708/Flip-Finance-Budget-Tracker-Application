@@ -77,7 +77,9 @@ fun LoginScreen(
     val isAuthenticated by viewModel.isAuthenticated.collectAsState()
     val error by viewModel.error.collectAsState()
 
-
+    LaunchedEffect(Unit) {
+        viewModel.resetAuthentication()
+    }
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) onLoginSuccess()

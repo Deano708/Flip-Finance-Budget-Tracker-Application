@@ -23,7 +23,10 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        val localProperties = org.jetbrains.kotlin.konan.properties.loadProperties("${rootProject.projectDir}/local.properties")
 
+        buildConfigField("String", "SUPABASE_URL", "\"${localProperties["SUPABASE_URL"]}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${localProperties["SUPABASE_KEY"]}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -50,6 +53,7 @@ android {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
+    android.buildFeatures.buildConfig = true
 }
 
 dependencies {
@@ -66,7 +70,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Navigation & Icons
     implementation(libs.androidx.navigation.compose)
@@ -76,6 +79,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.ui)
+    implementation(libs.androidx.compose.animation)
     ksp(libs.androidx.room.compiler)
 
     // Firebase (Using BoM)
@@ -96,23 +100,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // Supabase (Stay with 3.0.3)
-    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.3"))
+    // Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.4"))
     implementation("io.github.jan-tennert.supabase:storage-kt")
-    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-
-    // Update Ktor to 3.0.0 or later to match Supabase BOM 3.0.3
-    val ktor_version = "3.0.0"
-    implementation("io.ktor:ktor-client-android:$ktor_version")
-    implementation("io.ktor:ktor-client-core:$ktor_version")
-    implementation("io.ktor:ktor-client-plugins:$ktor_version")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-
-    // Add this specifically if you are doing JSON serialization with Supabase
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
-}
-configurations.all {
-    resolutionStrategy {
-        force("androidx.browser:browser:1.8.0")
-    }
+    implementation("io.ktor:ktor-client-android:3.1.3")
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }

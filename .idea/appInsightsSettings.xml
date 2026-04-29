@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.example.flipfinance" />
-                  <option name="mobileSdkAppId" value="1:209460735973:android:3af27d5c95c6f97d29c90c" />
-                  <option name="projectId" value="flipfinance-cba5d" />
-                  <option name="projectNumber" value="209460735973" />
+                  <option name="appId" value="PLACEHOLDER" />
+                  <option name="mobileSdkAppId" value="" />
+                  <option name="projectId" value="" />
+                  <option name="projectNumber" value="" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

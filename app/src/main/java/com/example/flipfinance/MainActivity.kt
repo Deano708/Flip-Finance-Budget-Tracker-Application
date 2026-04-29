@@ -89,8 +89,8 @@ class MainActivity : ComponentActivity() {
                             val ShowBottomBar = currentRoute !in authRoutes && currentUser != null
 
                             // Handle session logout
-                            LaunchedEffect(currentUser) {
-                                if (currentUser == null && currentRoute !in authRoutes) {
+                            LaunchedEffect(currentUser, currentRoute) {
+                                if (currentUser == null && currentRoute != null && currentRoute !in authRoutes) {
                                     navController.navigate(Screen.Login.route) {
                                         popUpTo(0) { inclusive = true }
                                     }
@@ -106,6 +106,7 @@ class MainActivity : ComponentActivity() {
                             ) { innerPadding ->
                                 NavGraph(
                                     navController = navController,
+                                    authViewModel = authViewModel,
                                     modifier = Modifier.padding(innerPadding)
                                 )
                             }
