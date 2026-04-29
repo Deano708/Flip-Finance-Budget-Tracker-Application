@@ -1,13 +1,10 @@
 package com.example.flipfinance.data.remote
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Base64
 import com.example.flipfinance.domain.model.UserProfile
 import com.example.flipfinance.domain.repository.ProfileRepository
-import com.google.firebase.auth.EmailAuthProvider
+import com.example.flipfinance.supabase.AvatarStorageService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,9 +12,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.io.ByteArrayOutputStream
 import javax.inject.Inject
-import androidx.core.graphics.scale
 
 class FirebaseProfileRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
@@ -25,8 +20,10 @@ class FirebaseProfileRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ProfileRepository {
 
+    private val avatarStorageService = AvatarStorageService()
+
     // Emits a fresh UserProfile whenever auth state changes.
-    // Reads firstName/lastName from Realtime Database users/{uid}/
+    // Reads firstName, lastName and photoUrl from Realtime Database users/{uid}/
     override val userProfile: Flow<UserProfile?> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { auth ->
             val firebaseUser = auth.currentUser
@@ -61,29 +58,31 @@ class FirebaseProfileRepository @Inject constructor(
         awaitClose { firebaseAuth.removeAuthStateListener(listener) }
     }
 
-    // Uploads photo as Base64 into Realtime Database
+    // Uploads photo to Supabase Storage, then saves the returned public URL
+    // to Firebase Realtime Database under users/{uid}/photoUrl
     override suspend fun uploadPhoto(uri: Uri): Result<Unit> = runCatching {
         val uid = firebaseAuth.currentUser?.uid
             ?: throw IllegalStateException("No authenticated user")
 
-        val base64String = compressAndEncodeImage(uri)
+        // Upload to Supabase — returns a public URL string
+        val publicUrl = avatarStorageService.uploadAvatar(context, uri)
 
+        // Save the URL to Firebase Database
         firebaseDatabase.reference
             .child("users")
             .child(uid)
             .child("photoUrl")
-            .setValue(base64String)
+            .setValue(publicUrl)
             .await()
+
         Unit
     }
 
-    // Updates firstName/lastName in Database and email/password in Firebase Auth.
+    // Updates firstName/lastName in Database and password in Firebase Auth.
     // Only updates fields that are non-blank — blank fields are left unchanged.
-    // Re-authentication is required by Firebase before changing email or password.
     override suspend fun updateCredentials(
         firstName: String,
         lastName: String,
-
         password: String
     ): Result<Unit> = runCatching {
         val user = firebaseAuth.currentUser
@@ -101,41 +100,11 @@ class FirebaseProfileRepository @Inject constructor(
                 .await()
         }
 
-        // Update email in Auth if provided and different
-
-
         // Update password in Auth if provided
         if (password.isNotBlank()) {
             user.updatePassword(password).await()
         }
 
         Unit
-    }
-
-    private fun compressAndEncodeImage(uri: Uri): String {
-        val inputStream = context.contentResolver.openInputStream(uri)
-            ?: throw IllegalArgumentException("Cannot open image URI")
-
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)
-        inputStream.close()
-
-        val maxSize = 400
-        val scale = minOf(
-            maxSize.toFloat() / originalBitmap.width,
-            maxSize.toFloat() / originalBitmap.height,
-            1f
-        )
-        val scaledBitmap = originalBitmap.scale(
-            (originalBitmap.width * scale).toInt(),
-            (originalBitmap.height * scale).toInt()
-        )
-
-        val outputStream = ByteArrayOutputStream()
-        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
-
-        if (scaledBitmap != originalBitmap) scaledBitmap.recycle()
-        originalBitmap.recycle()
-
-        return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
     }
 }

@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
 
-        <!-- FileProvider: allows the camera app to write a photo into our app's cache -->
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -23,7 +23,10 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        val localProperties = org.jetbrains.kotlin.konan.properties.loadProperties("${rootProject.projectDir}/local.properties")
 
+        buildConfigField("String", "SUPABASE_URL", "\"${localProperties["SUPABASE_URL"]}\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"${localProperties["SUPABASE_KEY"]}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -50,6 +53,7 @@ android {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
+    android.buildFeatures.buildConfig = true
 }
 
 dependencies {
@@ -95,4 +99,10 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.4"))
+    implementation("io.github.jan-tennert.supabase:storage-kt")
+    implementation("io.ktor:ktor-client-android:3.1.3")
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }
