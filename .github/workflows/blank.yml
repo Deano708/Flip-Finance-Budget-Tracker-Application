@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ] 
+    branches: [ "main" ] # Aligned with your synchronized branch naming
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -22,11 +22,11 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # Create google-services.json from GitHub Secrets
+      # Decodes secret back into a physical file for the Firebase plugin
       - name: Decode Google Services JSON
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > app/google-services.json
 
-      # Create local.properties for Supabase/API Keys
+      # Injects Supabase keys into the runner's local properties for local fallback
       - name: Create local.properties
         run: |
           echo "supabase.url=${{ secrets.SUPABASE_URL }}" >> local.properties
@@ -36,10 +36,13 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assembleDebug test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: ./gradlew clean assembleDebug test --stacktrace
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flipfinance-debug-apk
+          name: FlipFinance-Debug-Build
           path: app/build/outputs/apk/debug/app-debug.apk
