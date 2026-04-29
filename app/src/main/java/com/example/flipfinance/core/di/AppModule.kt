@@ -42,7 +42,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseDatabase(): FirebaseDatabase = FirebaseDatabase.getInstance()
+    fun provideFirebaseDatabase(): FirebaseDatabase =
+        FirebaseDatabase.getInstance("https://flipfinance-cba5d-default-rtdb.europe-west1.firebasedatabase.app/")
+
 
     @Provides
     @Singleton
