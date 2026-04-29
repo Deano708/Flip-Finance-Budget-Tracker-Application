@@ -26,6 +26,7 @@ import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.components.TransactionItem
+import com.example.flipfinance.ui.components.transactions.FinanceSummaryCard
 import com.example.flipfinance.ui.components.transactions.TransactionDetailsSheet
 import com.example.flipfinance.ui.components.transactions.TransactionFilterRow
 import com.example.flipfinance.ui.components.transactions.TransactionSearchBar
@@ -146,6 +147,19 @@ fun TransactionScreen(
         }
     }
 
+    //Calculate the Total Amount Based on the Filtered Results
+    val totalSpent = remember(filteredTransactions) {
+        filteredTransactions
+            .filter { it.expenseType.equals("Expense", ignoreCase = true) }
+            .sumOf { it.amount }
+    }
+
+    val totalIncome = remember(filteredTransactions) {
+        filteredTransactions
+            .filter { it.expenseType.equals("Income", ignoreCase = true) }
+            .sumOf { it.amount }
+    }
+
     // for the bottom sheet
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var showSheet by remember { mutableStateOf(false) }
@@ -197,6 +211,15 @@ fun TransactionScreen(
                 selectedFilter = selectedFilter,
                 onFilterSelected = { selectedFilter = it }
             )
+
+            // Dynamic Category Spend
+            if (filteredTransactions.isNotEmpty()) {
+                FinanceSummaryCard(
+                    income = totalIncome,
+                    expense = totalSpent,
+                    currencySymbol = currencySymbol
+                )
+            }
 
             if (filteredTransactions.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
