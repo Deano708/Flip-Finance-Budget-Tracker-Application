@@ -24,6 +24,7 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 - **Reactive Financial Summary**: A dynamic Finance Summary Card that provides real-time totals for income and expenses based on the active filter and search criteria.
 - **Real-Time Search**: High-performance transaction search implementation covering titles and descriptions using Kotlin Flow.
 - **Visualisation**: Grouped transaction history with sticky date headers and dynamic color-coding for financial health tracking.
+- **Dynamic Category Allocation**: "+ Add" interactive pill injection inside filter states for provisioning runtime, user-defined custom categories seamlessly.
 
 ### Input Validation & UX
 - **Context-Aware Error Handling**: Field-level validation that guides users with specific messages (e.g., "Invalid email format" or "Password too short").
@@ -79,6 +80,7 @@ The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules o
 | **Authentication** | Firebase Auth |
 | **Local Database** | Room Persistence Library (SQLite) |
 | **Cloud Storage** | Supabase Storage (Receipt Uploads) |
+| **Cloud Database** | Firebase Realtime Database (RTDB) |
 | **Persistence** | Jetpack DataStore (Preferences) |
 | **Architecture** | Clean Architecture + MVVM |
 | **Asynchronous Logic** | Kotlin Coroutines & Flow |
@@ -149,4 +151,6 @@ The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules o
 - [x] Advanced Search and Category Filtering.
 - [x] Reactive Finance Summary Card (Income/Expense totals).
 - [x] Global Multi-Currency and Dark Mode support.
-- [x] Interactive spending analytics with MPAndroidChart.
+- [x] Relational Database Schema Normalization (Room DB v2).
+- [x] Firebase Realtime Database integration for user custom criteria syncing.
+- [] Interactive spending analytics with MPAndroidChart.
