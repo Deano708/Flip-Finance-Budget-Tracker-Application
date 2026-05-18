@@ -79,7 +79,7 @@ class TransactionViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-    private val rtdbRef = fbDatabase.getReference("users/$currentUserId/categories")
+    private val rtdbRef = fbDatabase.getReference("categories/$currentUserId")
 
     // Reactive Categories Pipeline
     val categories: StateFlow<List<Category>> = categoryDao.getCategoriesByUser(currentUserId)
