@@ -142,7 +142,7 @@ fun AddTransactionScreen(
                                 title = title,
                                 amount = amount.toDoubleOrNull() ?: 0.0,
                                 date = System.currentTimeMillis(),
-                                expenseCategory = selectedCategory,
+                                categoryId = selectedCategory,
                                 expenseType = selectedType,
                                 description = notes,
                                 receiptUrl = null // This will be updated after upload

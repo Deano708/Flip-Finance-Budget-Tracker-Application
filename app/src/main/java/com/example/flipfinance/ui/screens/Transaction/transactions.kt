@@ -118,6 +118,7 @@ fun TransactionScreen(
     onTransactionClick: (Transaction) -> Unit
 ) {
     val transactionList by viewModel.transactions.collectAsState()
+    val categoryList by viewModel.categories.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
     val currencySymbol = settingsState.currency.symbol
     // Filter State
@@ -126,9 +127,14 @@ fun TransactionScreen(
     // State for Search
     var searchQuery by remember { mutableStateOf("") }
 
+    // Dialog UI Overlay Tracker state
+    var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var newCategoryName by remember { mutableStateOf("") }
+
     // Logic to Filter the Transactions based on Selection
-    val filteredTransactions = remember(transactionList, selectedFilter, searchQuery) {
+    val filteredTransactions = remember(transactionList, categoryList, selectedFilter, searchQuery) {
         transactionList.filter { transaction ->
+            val resolvedCategoryName = categoryList.find { it.categoryId == transaction.categoryId }?.name ?: ""
 
             val matchesFilter = when {
                 selectedFilter.equals("All", ignoreCase = true) -> true
@@ -136,7 +142,7 @@ fun TransactionScreen(
                         selectedFilter.equals("Income", ignoreCase = true) -> {
                     transaction.expenseType.equals(selectedFilter, ignoreCase = true)
                 }
-                else -> transaction.expenseCategory.equals(selectedFilter, ignoreCase = true)
+                else -> resolvedCategoryName.equals(selectedFilter, ignoreCase = true)
             }
 
             // Check Search Query - (Title or Description)
@@ -158,6 +164,36 @@ fun TransactionScreen(
         filteredTransactions
             .filter { it.expenseType.equals("Income", ignoreCase = true) }
             .sumOf { it.amount }
+    }
+
+    if (showAddCategoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddCategoryDialog = false },
+            title = { Text("New Custom Category") },
+            text = {
+                OutlinedTextField(
+                    value = newCategoryName,
+                    onValueChange = { newCategoryName = it },
+                    label = { Text("Category Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newCategoryName.isNotBlank()) {
+                            viewModel.addNewCategory(newCategoryName)
+                            newCategoryName = ""
+                            showAddCategoryDialog = false
+                        }
+                    }
+                ) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddCategoryDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     // for the bottom sheet
@@ -209,7 +245,9 @@ fun TransactionScreen(
             // Filter Row
             TransactionFilterRow(
                 selectedFilter = selectedFilter,
-                onFilterSelected = { selectedFilter = it }
+                categories = categoryList,
+                onFilterSelected = { selectedFilter = it },
+                onAddCategoryClick = { showAddCategoryDialog = true }
             )
 
             // Dynamic Category Spend

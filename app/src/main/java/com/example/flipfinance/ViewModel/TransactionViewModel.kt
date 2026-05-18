@@ -1,5 +1,6 @@
 package com.example.flipfinance.ViewModel
 
+import android.R.attr.category
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -17,10 +18,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
-import androidx.lifecycle.viewModelScope
+import com.example.flipfinance.data.local.Entities.Category
+import com.example.flipfinance.data.local.dao.CategoryDao
+import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
 // For Home
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
+import java.util.UUID
 
 /*
    Title: Save data in a local database using Room
@@ -67,19 +73,47 @@ import java.util.Calendar
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
     private val dao: TransactionDao,
-    @ApplicationContext private val context: Context // Hilt provides this automatically
+    private val categoryDao: CategoryDao,
+    private val fbDatabase: FirebaseDatabase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    private val rtdbRef = fbDatabase.getReference("users/$currentUserId/categories")
+
+    // Reactive Categories Pipeline
+    val categories: StateFlow<List<Category>> = categoryDao.getCategoriesByUser(currentUserId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val transactions: StateFlow<List<Transaction>> = dao.getTransactionsByUser(currentUserId)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Simultaneously save to RoomDB and Push up to Firebase Realtime Database
+    fun addNewCategory(name: String) {
+        if (name.isBlank() || currentUserId.isBlank()) return
+
+        val uniqueId = UUID.randomUUID().toString()
+        val newCategory = Category(
+            categoryId = uniqueId,
+            userId = currentUserId,
+            name = name.trim(),
+            isCustom = true
         )
 
-    // Home screen implementation - for total spent in this month
+        viewModelScope.launch(Dispatchers.IO) {
+            // Write locally - (Offline Mode)
+            categoryDao.insertCategory(newCategory)
+
+            // Write Online (Firebase Synchronization)
+            rtdbRef.child(uniqueId).setValue(newCategory)
+                .addOnFailureListener {
+                    // On Failure Create Code - On to You mr Fraser
+                }
+        }
+    }
+
+
+    // Home screen implementation - For total spent in this month
     val totalSpentThisMonth: StateFlow<Double> = transactions
         .map { list ->
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
@@ -96,9 +130,11 @@ class TransactionViewModel @Inject constructor(
 
     // Home - Highest Category Spent
     val highestCategorySpend: StateFlow<Pair<String, Double>?> = transactions
-        .map { list ->
-            list.filter { it.expenseType == "Expense" }
-                .groupBy { it.expenseCategory }
+        .combine(categories) { txList, catList ->
+            txList.filter { it.expenseType == "Expense" }
+                .groupBy { tx ->
+                    catList.find { it.categoryId == tx.categoryId }?.name ?: "Unknown"
+                }
                 .mapValues { entry -> entry.value.sumOf { it.amount } }
                 .toList()
                 .maxByOrNull { it.second }

@@ -78,7 +78,7 @@ fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: (
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
-                        imageVector = getCategoryIcon(transaction.expenseCategory),
+                        imageVector = getCategoryIcon(transaction.categoryId),
                         contentDescription = null,
                         modifier = Modifier.padding(10.dp),
                         tint = if (isIncome) colorScheme.primary else colorScheme.error
@@ -98,7 +98,7 @@ fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: (
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = transaction.expenseCategory,
+                        text = transaction.categoryId,
                         style = MaterialTheme.typography.labelMedium,
                         color = colorScheme.onSurfaceVariant
                     )

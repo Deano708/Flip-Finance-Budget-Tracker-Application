@@ -204,7 +204,7 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String) {
             )
 
             Text(
-                text = transaction.expenseCategory,
+                text = transaction.categoryId,
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )

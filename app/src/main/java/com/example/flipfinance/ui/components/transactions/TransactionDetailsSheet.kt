@@ -168,7 +168,7 @@ fun TransactionDetailsSheet(
         // Category to allow the user to pick transaction category
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DetailsTextField(
-                value = transaction.expenseCategory,
+                value = transaction.categoryId,
                 onValueChange = {},
                 modifier = Modifier.weight(1f),
                 enabled = false,
