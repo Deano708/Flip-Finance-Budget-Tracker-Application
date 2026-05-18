@@ -1,6 +1,7 @@
 package com.example.flipfinance.data.local.util
 
 import android.content.Context
+import com.example.flipfinance.data.local.dao.CategoryDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,4 +39,11 @@ object DatabaseModule {
     fun provideTransactionDao(database: FlipFinanceDatabase): TransactionDao {
         return database.transactionDao()
     }
+
+    // Custom Categories
+    @Provides
+    fun provideCategoryDao(database: FlipFinanceDatabase): CategoryDao {
+        return database.categoryDao()
+    }
+
 }

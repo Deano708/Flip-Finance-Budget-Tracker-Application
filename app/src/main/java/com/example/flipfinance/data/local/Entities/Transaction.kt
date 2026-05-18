@@ -27,7 +27,7 @@ data class Transaction(
     val title: String,
     val amount: Double,
     val date: Long, // Storing as a timestamp (Long) is best for Room
-    val expenseCategory: String, // e.g., "Food", "Transport"
+    val categoryId: String, // e.g., "Food", "Transport"
     val expenseType: String, // e.g., "Income", "Expense"
     val description: String,
     val receiptUrl: String? = null // new field for reciept uploads to supabase
