@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.example.flipfinance.data.local.Entities.Category
 
 /*
    Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
@@ -62,10 +63,17 @@ import androidx.compose.material3.MaterialTheme
 */
 
 @Composable
-fun CategoryDropdown(selectedCategory: String, onCategorySelected: (String) -> Unit) {
-    val categories = listOf("Food", "Transport", "Rent", "Salary", "Utilities", "Other")
+fun CategoryDropdown(selectedCategoryId: String,
+                     categoriesList: List<Category>, // Added live Database entities List
+                     onCategorySelected: (Category) -> Unit) {
+
     var expanded by remember { mutableStateOf(false) }
     val colorScheme = MaterialTheme.colorScheme
+
+    // Look up the Display Name for the Currently Selected ID
+    val currentDisplayCategory = remember(selectedCategoryId, categoriesList) {
+        categoriesList.find { it.categoryId == selectedCategoryId }?.name ?: "Select Category"
+    }
 
     Box {
         Card(
@@ -83,7 +91,7 @@ fun CategoryDropdown(selectedCategory: String, onCategorySelected: (String) -> U
             ) {
                 Text("Category", color = colorScheme.onSurface)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(selectedCategory, color = colorScheme.onSurfaceVariant,
+                    Text(currentDisplayCategory, color = colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.width(8.dp))
                     Icon(
@@ -100,9 +108,9 @@ fun CategoryDropdown(selectedCategory: String, onCategorySelected: (String) -> U
             onDismissRequest = { expanded = false },
             modifier = Modifier.background(colorScheme.surface)
         ) {
-            categories.forEach { category ->
+            categoriesList.forEach { category ->
                 DropdownMenuItem(
-                    text = { Text(category, color = colorScheme.onSurface) },
+                    text = { Text(category.name, color = colorScheme.onSurface) },
                     onClick = {
                         onCategorySelected(category)
                         expanded = false

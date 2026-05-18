@@ -31,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -113,11 +114,24 @@ fun AddTransactionScreen(
 ) {
     val settingsState by settingsViewModel.uiState.collectAsState()
     val currencySymbol = settingsState.currency.symbol
+
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf("Expense") }
-    var selectedCategory by remember { mutableStateOf("Food") }
+
+    // Collect our categories flow from the database
+    val categoryList by viewModel.categories.collectAsState()
+
+    var selectedCategoryId by remember { mutableStateOf("") }
+    // Auto Select the first Available category ID once the list loads
+    LaunchedEffect(categoryList) {
+        if (selectedCategoryId.isBlank() && categoryList.isNotEmpty()) {
+            selectedCategoryId = categoryList.first().categoryId
+        }
+    }
+
     var notes by remember { mutableStateOf("") }
+
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         selectedImageUri = uri
@@ -142,7 +156,7 @@ fun AddTransactionScreen(
                                 title = title,
                                 amount = amount.toDoubleOrNull() ?: 0.0,
                                 date = System.currentTimeMillis(),
-                                categoryId = selectedCategory,
+                                categoryId = selectedCategoryId,
                                 expenseType = selectedType,
                                 description = notes,
                                 receiptUrl = null // This will be updated after upload
@@ -217,7 +231,13 @@ fun AddTransactionScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Text("Category", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
-            CategoryDropdown(selectedCategory) { selectedCategory = it }
+
+            CategoryDropdown(
+                selectedCategoryId = selectedCategoryId,
+                categoriesList = categoryList
+            ) { clickedCategory ->
+                selectedCategoryId = clickedCategory.categoryId // Save the Corresponding ID
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
