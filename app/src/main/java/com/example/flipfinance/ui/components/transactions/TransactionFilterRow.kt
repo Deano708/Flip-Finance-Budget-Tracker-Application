@@ -36,7 +36,7 @@ fun TransactionFilterRow(
     onAddCategoryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val filters = listOf("All", "Expense", "Income", "Food", "Transport", "Salary", "Rent", "Other")
+    val filters = listOf("All", "Expense", "Income")
 
     LazyRow(
         modifier = modifier
