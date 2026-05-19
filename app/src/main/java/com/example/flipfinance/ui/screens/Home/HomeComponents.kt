@@ -27,6 +27,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ui.theme.PrimaryGreen
 import com.example.flipfinance.ui.theme.SecondaryGold
@@ -174,8 +176,12 @@ fun SummaryCard(
 
 // maps Transaction entity from Room to a row in the "Recent Transactions" section
 @Composable
-fun TransactionListItem(transaction: Transaction, currencySymbol: String) {
+fun TransactionListItem(transaction: Transaction, currencySymbol: String, categories: List<Category>) {
     val isExpense = transaction.expenseType == "Expense"
+
+    val CategoryName = remember(transaction.categoryId, categories) {
+        categories.find { it.categoryId == transaction.categoryId }?.name ?: "Other"
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -204,7 +210,7 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String) {
             )
 
             Text(
-                text = transaction.categoryId,
+                text = CategoryName,
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )

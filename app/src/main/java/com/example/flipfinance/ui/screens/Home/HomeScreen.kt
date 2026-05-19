@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.flipfinance.ViewModel.AuthViewModel
 import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.ViewModel.TransactionViewModel
@@ -38,6 +39,7 @@ fun HomeScreen(
 
     // Transaction Data
     val transactions by transactionViewModel.transactions.collectAsState()
+    val categoryList by transactionViewModel.categories.collectAsState()
     val totalSpent by transactionViewModel.totalSpentThisMonth.collectAsState()
     val topCategory by transactionViewModel.highestCategorySpend.collectAsState()
     val comparison by transactionViewModel.spendingComparison.collectAsState()
@@ -132,7 +134,8 @@ fun HomeScreen(
                 items(transactions.take(5)) { transaction ->
                     TransactionListItem(
                         transaction = transaction,
-                        currencySymbol = currencySymbol // Pass symbol to list items
+                        currencySymbol = currencySymbol, // Pass symbol to list items
+                        categories = categoryList
                     )
                 }
 
