@@ -234,10 +234,14 @@ fun AddTransactionScreen(
 
             CategoryDropdown(
                 selectedCategoryId = selectedCategoryId,
-                categoriesList = categoryList
-            ) { clickedCategory ->
-                selectedCategoryId = clickedCategory.categoryId // Save the Corresponding ID
-            }
+                categoriesList = categoryList,
+                onCategorySelected = { clickedCategory ->
+                    selectedCategoryId = clickedCategory.categoryId
+                },
+                onAddCategory = { freshName ->
+                    viewModel.addNewCategory(freshName) // Carry Out Insertion Logic  toRoomDB and Firebase
+                }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
