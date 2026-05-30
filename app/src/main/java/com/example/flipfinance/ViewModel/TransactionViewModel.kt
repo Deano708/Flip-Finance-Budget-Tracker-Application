@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 // For Home
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.UUID
@@ -183,44 +184,45 @@ class TransactionViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
 
-    fun addTransaction(transaction: Transaction, imageUri: Uri?) {
-        viewModelScope.launch {
+    suspend fun addTransaction(transaction: Transaction, imageUri: Uri?) {
+        withContext(Dispatchers.IO) {
             var finalImageUrl: String? = null
             val uniqueTxId = UUID.randomUUID().toString()
 
-            imageUri?.let { uri ->
-                // Use NonCancellable so the upload finishes even if the UI closes
+            if (imageUri != null) {
                 try {
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val bytes = inputStream?.readBytes()
+                    val bytes = context.contentResolver.openInputStream(imageUri).use { inputStream ->
+                        inputStream?.readBytes()
+                    }
 
                     if (bytes != null) {
-                        val fileName = "receipt_${System.currentTimeMillis()}.jpg"
-                        val bucket = supabase.storage.from("RecieptStorage")
+                        val fileName = "receipts/${currentUserId}_${uniqueTxId}.jpg"
 
-                        // Perform upload in a context that won't be killed mid-way
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
-                            bucket.upload("receipts/$fileName", bytes)
-                            finalImageUrl = bucket.publicUrl("receipts/$fileName")
+                        supabase.storage.from("RecieptStorage").upload(fileName, bytes) {
+                            upsert = true
                         }
-                        Log.d("UploadSuccess", "Generated URL: $finalImageUrl")
+
+                        finalImageUrl = supabase.storage.from("RecieptStorage").publicUrl(fileName)
                     }
                 } catch (e: Exception) {
-                    Log.e("UploadError", "Failed to upload: ${e.message}")
+                    Log.e("UploadError", "Failed to complete Supabase upload sequence: ${e.message}", e)
+                    throw e // Pass it to the UI layer to stop navigation on failure
                 }
             }
-            val deterministicId = uniqueTxId.hashCode() and 0xfffffff
 
-            // Map string tracking element fields properly for clean node key bindings
-            val transactionToSave = transaction.copy(
-                transactionId = deterministicId, // Safe integer translation fallback
+            val finalizedTransaction = transaction.copy(
                 userId = currentUserId,
                 receiptUrl = finalImageUrl
             )
 
-            // Persist directly inside the remote Firebase database node environment
-            withContext(Dispatchers.IO) {
-                firebaseSource.insertTransaction(currentUserId, transactionToSave, deterministicId.toString())
+            //log errors to help with debugging when uploading a receipt
+            try {
+                val firebaseRef = fbDatabase.getReference("transactions/$currentUserId")
+                firebaseRef.child(uniqueTxId).setValue(finalizedTransaction).await()
+                Log.d("FirebaseSuccess", "Transaction successfully written online!")
+            } catch (dbEx: Exception) {
+                Log.e("DatabaseError", "Firebase execution failure writing transaction: ${dbEx.message}")
+                throw dbEx
             }
         }
     }
