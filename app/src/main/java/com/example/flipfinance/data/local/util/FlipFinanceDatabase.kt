@@ -25,7 +25,7 @@ import com.example.flipfinance.data.local.dao.CategoryDao
 */
 
 // instantiates the database so it can be used througout the app.
-@Database(entities = [Transaction::class, Category::class], version = 2, exportSchema = false)
+@Database(entities = [Transaction::class, Category::class], version = 3, exportSchema = false)
 abstract class FlipFinanceDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun categoryDao(): CategoryDao

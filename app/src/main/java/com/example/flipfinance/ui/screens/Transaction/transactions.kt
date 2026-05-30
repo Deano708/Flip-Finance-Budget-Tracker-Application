@@ -1,5 +1,6 @@
 package com.example.flipfinance.ui.screens.Transaction
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +34,7 @@ import com.example.flipfinance.ui.components.transactions.TransactionFilterRow
 import com.example.flipfinance.ui.components.transactions.TransactionSearchBar
 import com.example.flipfinance.ui.components.transactions.formatTransactionDate
 import com.example.flipfinance.ui.screens.navigation.Screen
+import kotlinx.coroutines.launch
 
 /*
    Title: Save data in a local database using Room
@@ -130,6 +133,8 @@ fun TransactionScreen(
     // Dialog UI Overlay Tracker state
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
+
+    val scope = rememberCoroutineScope()
 
     // Logic to Filter the Transactions based on Selection
     val filteredTransactions = remember(transactionList, categoryList, selectedFilter, searchQuery) {
@@ -313,13 +318,21 @@ fun TransactionScreen(
             ) {
                 TransactionDetailsSheet(
                     transaction = selectedTransaction!!,
+                    categories = categoryList, // <-- IMPLEMENTED STEP 4 HERE
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        viewModel.deleteTransaction(selectedTransaction!!.transactionId)
+                        val firebaseNodeKey = selectedTransaction!!.transactionId.toString()
+                        viewModel.deleteTransaction(firebaseNodeKey)
                         showSheet = false
                     },
                     onEdit = { updatedTransaction ->
-                        viewModel.addTransaction(updatedTransaction,null) // Room uses @Insert(onConflict = REPLACE)
+                        scope.launch {
+                            try {
+                                viewModel.addTransaction(updatedTransaction, null)
+                            } catch (e: Exception) {
+                                Log.e("EditError", "Failed to update transaction: ${e.message}")
+                            }
+                        }
                         showSheet = false
                     }
                 )

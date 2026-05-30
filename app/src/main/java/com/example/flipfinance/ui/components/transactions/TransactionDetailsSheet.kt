@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import coil.compose.AsyncImage
+import com.example.flipfinance.data.local.Entities.Category
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -97,6 +98,7 @@ import java.util.Locale
 @Composable
 fun TransactionDetailsSheet(
     transaction: Transaction,
+    categories: List<Category>,
     onDelete: () -> Unit,
     currencySymbol: String,
     onEdit: (Transaction) -> Unit
@@ -111,6 +113,10 @@ fun TransactionDetailsSheet(
     val colorScheme = MaterialTheme.colorScheme
 
     val context = LocalContext.current
+
+    val categoryName = remember(transaction.categoryId, categories) {
+        categories.find { it.categoryId == transaction.categoryId }?.name ?: "Unknown Category"
+    }
 
     Column(
         modifier = Modifier
@@ -168,7 +174,7 @@ fun TransactionDetailsSheet(
         // Category to allow the user to pick transaction category
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DetailsTextField(
-                value = transaction.categoryId,
+                value = categoryName, // <-- Swapped from transaction.categoryId
                 onValueChange = {},
                 modifier = Modifier.weight(1f),
                 enabled = false,
