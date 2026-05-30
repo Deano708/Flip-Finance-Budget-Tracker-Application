@@ -18,7 +18,7 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 - **Persistence-Driven Dark Mode**: Integrates Jetpack DataStore with the Material 3 ColorScheme to provide a persistent Dark Theme that respects user choice across application restarts.
 
 ### Transaction Management & Analytics
-- **Local Persistence**: Full CRUD operations powered by **RoomDB SQLite**, ensuring data is accessible offline.
+- **Asynchronous Cloud Source**: Full CRUD operations streams directly from **Firebase Realtime Database**, facilitating cloud synchronization across different device targets.
 - **Multi-Cloud Hybrid Storage**: Transaction metadata is stored locally, while physical receipt images are securely offloaded to **Supabase Storage**.
 - **Contextual Filtering**: A reactive filter system allowing users to toggle between Income/Expense types and specific categories (Food, Transport, etc.).
 - **Reactive Financial Summary**: A dynamic Finance Summary Card that provides real-time totals for income and expenses based on the active filter and search criteria.
@@ -156,4 +156,5 @@ The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules o
 - [x] Firebase Realtime Database integration for user custom criteria syncing.
 - [x] Custom Category Insertion.
 - [x] Gesture-Driven Cascading Category Removal.
+- [x] Reactive Date Range Boundary Processing Flow.
 - [] Interactive spending analytics with MPAndroidChart.
