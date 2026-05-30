@@ -79,11 +79,14 @@ import java.util.UUID
    Availability: https://copilot.microsoft.com/shares/3zFig2DCQubzgp23rKDoS
 */
 
+
+
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
     private val firebaseSource: FirebaseTransactionSource, // Swapped to Firebase transaction source from RoomDB for transaction storage
     private val categoryDao: CategoryDao,
     private val fbDatabase: FirebaseDatabase,
+    private val dao: TransactionDao,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -238,6 +241,30 @@ class TransactionViewModel @Inject constructor(
     fun deleteTransaction(uniqueFirebaseKeyId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             firebaseSource.deleteTransaction(currentUserId, uniqueFirebaseKeyId)
+        }
+    }
+
+    fun deleteCustomCategory(category: Category) {
+        if (!category.isCustom || currentUserId.isBlank()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            //  Reset transactions Using this category to Prevent Broken Mappings
+            dao.getTransactionsByUser(currentUserId)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1000), emptyList())
+                .value
+                .filter { it.categoryId == category.categoryId }
+                .forEach { affected ->
+                    dao.insertTransaction(affected.copy(categoryId = ""))
+                }
+
+            // Remove from RoomDB
+            categoryDao.deleteCategory(id = category.categoryId, userId = currentUserId)
+
+            // Remove from Firebase RTDB
+            rtdbRef.child(category.categoryId).removeValue()
+                .addOnFailureListener {
+                    Log.e("FirebaseDelete", "Failed to Sync Category Deletion Online")
+                }
         }
     }
 }
