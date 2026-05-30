@@ -20,7 +20,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
@@ -30,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -106,6 +110,7 @@ import com.example.flipfinance.ViewModel.SettingsViewModel
    Availability: https://copilot.microsoft.com/shares/4kNf4Zpv4nXXgkE23uoCJ
 */
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(
     viewModel: TransactionViewModel,
@@ -236,6 +241,46 @@ fun AddTransactionScreen(
                             )
                         )
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Transcation Date", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
+
+            OutlinedTextField(
+                value = formattedDate,
+                onValueChange = {},
+                modifier = Modifier.fillMaxWidth().clickable {showDatePicker = true},
+                enabled = false,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledBorderColor = colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    disabledTextColor = colorScheme.onSurface
+                ),
+                shape = MaterialTheme.shapes.medium
+            )
+            if (showDatePicker) {
+                val datePickerState = rememberDatePickerState(
+                    initialSelectedDateMillis = transactionDate
+                )
+
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            // Fallback to current time if selection is empty
+                            transactionDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                            showDatePicker = false
+                        }) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
                 }
             }
 
