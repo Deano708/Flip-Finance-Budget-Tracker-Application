@@ -30,7 +30,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
-    /*
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FlipFinanceDatabase {
@@ -47,7 +47,7 @@ object DatabaseModule {
     fun provideCategoryDao(database: FlipFinanceDatabase): CategoryDao {
         return database.categoryDao()
     }
-    */
+
     @Provides
     @Singleton
     fun provideFirebaseTransactionSource(fbDatabase: FirebaseDatabase): FirebaseTransactionSource {

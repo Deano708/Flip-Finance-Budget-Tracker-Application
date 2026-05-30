@@ -26,7 +26,7 @@ data class Transaction(
     val userId: String = "", // Foreign key from Firebase Auth
     val title: String = "",
     val amount: Double = 0.0,
-    val date: Long, // Storing as a timestamp (Long) is best for Room
+    val date: Long = 0L, // Storing as a timestamp (Long) is best for Room
     val categoryId: String = "", // e.g., "Food", "Transport"
     val expenseType: String = "", // e.g., "Income", "Expense"
     val description: String = "",
