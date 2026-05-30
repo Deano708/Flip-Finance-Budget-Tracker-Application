@@ -315,15 +315,14 @@ fun TransactionScreen(
             ) {
                 TransactionDetailsSheet(
                     transaction = selectedTransaction!!,
+                    categories = categoryList, // <-- IMPLEMENTED STEP 4 HERE
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        // Convert the integer transactionId to a string so it matches the Firebase path node key
                         val firebaseNodeKey = selectedTransaction!!.transactionId.toString()
                         viewModel.deleteTransaction(firebaseNodeKey)
                         showSheet = false
                     },
                     onEdit = { updatedTransaction ->
-                        // 2. Wrap the suspend function call in a coroutine scope launch block
                         scope.launch {
                             try {
                                 viewModel.addTransaction(updatedTransaction, null)
