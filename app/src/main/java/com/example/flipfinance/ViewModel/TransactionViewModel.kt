@@ -71,10 +71,17 @@ import java.util.UUID
    Availability: https://developer.android.com/training/dependency-injection/hilt-android
 */
 
+/*
+   Title: how to make use of a suspend function in kotlin
+   Author: Microsoft Copilot
+   Date: 30 May 2026
+   Code Version: 1
+   Availability: https://copilot.microsoft.com/shares/3zFig2DCQubzgp23rKDoS
+*/
 
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
-    private val firebaseSource: FirebaseTransactionSource, // Swapped to Firebase transaction source
+    private val firebaseSource: FirebaseTransactionSource, // Swapped to Firebase transaction source from RoomDB for transaction storage
     private val categoryDao: CategoryDao,
     private val fbDatabase: FirebaseDatabase,
     @ApplicationContext private val context: Context
@@ -183,10 +190,11 @@ class TransactionViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-
+    //made use of suspend to allow for supabase to return the receipt uid so it can be stored in the Database
     suspend fun addTransaction(transaction: Transaction, imageUri: Uri?) {
         withContext(Dispatchers.IO) {
             var finalImageUrl: String? = null
+            //unique transaction id
             val uniqueTxId = UUID.randomUUID().toString()
 
             if (imageUri != null) {
@@ -197,16 +205,16 @@ class TransactionViewModel @Inject constructor(
 
                     if (bytes != null) {
                         val fileName = "receipts/${currentUserId}_${uniqueTxId}.jpg"
-
+                        //stroing of the image
                         supabase.storage.from("RecieptStorage").upload(fileName, bytes) {
                             upsert = true
                         }
-
+                        //image URL to be stored with transaction info
                         finalImageUrl = supabase.storage.from("RecieptStorage").publicUrl(fileName)
                     }
                 } catch (e: Exception) {
                     Log.e("UploadError", "Failed to complete Supabase upload sequence: ${e.message}", e)
-                    throw e // Pass it to the UI layer to stop navigation on failure
+                    throw e
                 }
             }
 

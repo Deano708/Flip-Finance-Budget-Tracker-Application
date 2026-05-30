@@ -11,6 +11,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 
+/*
+   Title:How to Save Data to the Firebase Realtime Database in Android?
+   Author: geeksforgeeks
+   Date: 23 July 2025
+   Date accessed: 30/05/2026
+   Availability: https://www.geeksforgeeks.org/android/how-to-save-data-to-the-firebase-realtime-database-in-android/
+*/
+
+/*
+   Title: Firebase Realtime Database
+   Author: Firebase Documentation
+   Date: 27 May 2026
+   Date accessed: 30/05/2026
+   Availability: https://firebase.google.com/docs/database?_gl=1*qnqzmg*_up*MQ..&gclid=Cj0KCQjwlerQBhDMARIsAB16H-UZQX6peRrPI61IqoyjpCkl76qv9RTY4V5ap6HlXKqPiCk0BxZOihMaAoEZEALw_wcB&gclsrc=aw.ds&gbraid=0AAAAADpUDOhCz-vliQnTgQowojmhWAhpr
+*/
+
 class FirebaseTransactionSource @Inject constructor(
     private val fbDatabase : FirebaseDatabase
 ) {
