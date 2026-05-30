@@ -23,6 +23,7 @@ import com.example.flipfinance.data.local.dao.CategoryDao
 import com.example.flipfinance.data.local.util.FirebaseTransactionSource
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 // For Home
 import kotlinx.coroutines.flow.map
@@ -93,6 +94,10 @@ class TransactionViewModel @Inject constructor(
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     private val rtdbRef = fbDatabase.getReference("categories/$currentUserId")
 
+    // State Holders for Filter UI selection
+    val searchQuery = MutableStateFlow("")
+    val selectedFilter = MutableStateFlow("All")
+
     // Reactive Categories Pipeline (Kept completely locally sourced from Room DB as requested)
     val categories: StateFlow<List<Category>> = categoryDao.getCategoriesByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -100,6 +105,42 @@ class TransactionViewModel @Inject constructor(
     // Reactive Transactions Pipeline directly from Firebase
     val transactions: StateFlow<List<Transaction>> = firebaseSource.getTransactionsByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+
+    // Unified Search and Filter
+    val filteredTransactions: StateFlow<List<Transaction>> = combine(
+        transactions,
+        categories,
+        searchQuery,
+        selectedFilter
+    ) { txList, catList, query, filter ->
+        txList.filter { transaction ->
+            // Resolve custom category string display name via reference key lookup
+            val resolvedCategoryName = catList.find { it.categoryId == transaction.categoryId }?.name ?: ""
+
+            val matchesFilter = when {
+                filter.equals("All", ignoreCase = true) -> true
+                filter.equals("Expense", ignoreCase = true) || filter.equals("Income", ignoreCase = true) -> {
+                    transaction.expenseType.equals(filter, ignoreCase = true)
+                }
+                else -> resolvedCategoryName.equals(filter, ignoreCase = true)
+            }
+
+            val matchesSearch = transaction.title.contains(query, ignoreCase = true) ||
+                    transaction.description.contains(query, ignoreCase = true)
+
+            matchesFilter && matchesSearch
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+     // Dynamic Income/Expense Summary
+    val financeSummary: StateFlow<Pair<Double, Double>> = filteredTransactions
+        .map { list ->
+            val income = list.filter { it.expenseType.equals("Income", ignoreCase = true) }.sumOf { it.amount }
+            val expense = list.filter { it.expenseType.equals("Expense", ignoreCase = true) }.sumOf { it.amount }
+            Pair(income, expense)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(0.0, 0.0))
+
 
     // Simultaneously save to RoomDB and Push up to Firebase Realtime Database
     fun addNewCategory(name: String) {

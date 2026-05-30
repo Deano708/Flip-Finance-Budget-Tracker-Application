@@ -123,52 +123,21 @@ fun TransactionScreen(
     val categoryList by viewModel.categories.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
     val currencySymbol = settingsState.currency.symbol
+
     // Filter State
-    var selectedFilter by remember { mutableStateOf("All") }
+    val selectedFilter by viewModel.selectedFilter.collectAsState()
 
     // State for Search
-    var searchQuery by remember { mutableStateOf("") }
+    val searchQuery by viewModel.searchQuery.collectAsState()
+
+    val filteredTransactions by viewModel.filteredTransactions.collectAsState()
+    val summaryData by viewModel.financeSummary.collectAsState()
 
     // Dialog UI Overlay Tracker state
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
-
-    // Logic to Filter the Transactions based on Selection
-    val filteredTransactions = remember(transactionList, categoryList, selectedFilter, searchQuery) {
-        transactionList.filter { transaction ->
-            val resolvedCategoryName = categoryList.find { it.categoryId == transaction.categoryId }?.name ?: ""
-
-            val matchesFilter = when {
-                selectedFilter.equals("All", ignoreCase = true) -> true
-                selectedFilter.equals("Expense", ignoreCase = true) ||
-                        selectedFilter.equals("Income", ignoreCase = true) -> {
-                    transaction.expenseType.equals(selectedFilter, ignoreCase = true)
-                }
-                else -> resolvedCategoryName.equals(selectedFilter, ignoreCase = true)
-            }
-
-            // Check Search Query - (Title or Description)
-            val matchesSearch = transaction.title.contains(searchQuery, ignoreCase = true) ||
-                    transaction.description.contains(searchQuery, ignoreCase = true)
-
-            matchesFilter && matchesSearch
-        }
-    }
-
-    //Calculate the Total Amount Based on the Filtered Results
-    val totalSpent = remember(filteredTransactions) {
-        filteredTransactions
-            .filter { it.expenseType.equals("Expense", ignoreCase = true) }
-            .sumOf { it.amount }
-    }
-
-    val totalIncome = remember(filteredTransactions) {
-        filteredTransactions
-            .filter { it.expenseType.equals("Income", ignoreCase = true) }
-            .sumOf { it.amount }
-    }
 
     if (showAddCategoryDialog) {
         AlertDialog(
@@ -243,14 +212,14 @@ fun TransactionScreen(
             // Search Bar
             TransactionSearchBar(
                 query = searchQuery,
-                onQueryChanged = { searchQuery = it }
+                onQueryChanged = { viewModel.searchQuery.value = it }
             )
 
             // Filter Row
             TransactionFilterRow(
                 selectedFilter = selectedFilter,
                 categories = categoryList,
-                onFilterSelected = { selectedFilter = it },
+                onFilterSelected = { viewModel.selectedFilter.value = it },
                 onAddCategoryClick = { showAddCategoryDialog = true },
                 onDeleteCategoryClick = { targetCategory ->
                     viewModel.deleteCustomCategory(targetCategory)
@@ -260,8 +229,8 @@ fun TransactionScreen(
             // Dynamic Category Spend
             if (filteredTransactions.isNotEmpty()) {
                 FinanceSummaryCard(
-                    income = totalIncome,
-                    expense = totalSpent,
+                    income = summaryData.first,
+                    expense = summaryData.second,
                     currencySymbol = currencySymbol
                 )
             }
