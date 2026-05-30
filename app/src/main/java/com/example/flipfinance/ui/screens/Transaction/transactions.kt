@@ -321,8 +321,8 @@ fun TransactionScreen(
                     categories = categoryList, // <-- IMPLEMENTED STEP 4 HERE
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        val firebaseNodeKey = selectedTransaction!!.transactionId.toString()
-                        viewModel.deleteTransaction(firebaseNodeKey)
+                        val transactionIdKey = selectedTransaction!!.transactionId
+                        viewModel.deleteTransaction(transactionIdKey)
                         showSheet = false
                     },
                     onEdit = { updatedTransaction ->
