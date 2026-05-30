@@ -25,6 +25,7 @@ FlipFinance is a production-grade **Android mobile application** built to demons
 - **Real-Time Search**: High-performance transaction search implementation covering titles and descriptions using Kotlin Flow.
 - **Visualisation**: Grouped transaction history with sticky date headers and dynamic color-coding for financial health tracking.
 - **Dynamic Category Allocation**: "+ Add" interactive pill injection inside filter states for provisioning runtime, user-defined custom categories seamlessly.
+- **Gesture-Driven Deletion Flow**: Advanced UX supporting a "Long-Press to Edit Mode" on transaction filter elements, dynamically sliding out quick-removal controls.
 
 ### Input Validation & UX
 - **Context-Aware Error Handling**: Field-level validation that guides users with specific messages (e.g., "Invalid email format" or "Password too short").
@@ -153,4 +154,6 @@ The development of FlipFinance is guided by Shneiderman’s Eight Golden Rules o
 - [x] Global Multi-Currency and Dark Mode support.
 - [x] Relational Database Schema Normalization (Room DB v2).
 - [x] Firebase Realtime Database integration for user custom criteria syncing.
+- [x] Custom Category Insertion.
+- [x] Gesture-Driven Cascading Category Removal.
 - [] Interactive spending analytics with MPAndroidChart.
