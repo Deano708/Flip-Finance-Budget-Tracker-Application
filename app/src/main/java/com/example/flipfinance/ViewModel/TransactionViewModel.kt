@@ -20,11 +20,13 @@ import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
 import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.dao.CategoryDao
+import com.example.flipfinance.data.local.util.FirebaseTransactionSource
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 // For Home
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.UUID
 
@@ -69,10 +71,9 @@ import java.util.UUID
 */
 
 
-
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
-    private val dao: TransactionDao,
+    private val firebaseSource: FirebaseTransactionSource, // Swapped to Firebase transaction source
     private val categoryDao: CategoryDao,
     private val fbDatabase: FirebaseDatabase,
     @ApplicationContext private val context: Context
@@ -81,11 +82,12 @@ class TransactionViewModel @Inject constructor(
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     private val rtdbRef = fbDatabase.getReference("categories/$currentUserId")
 
-    // Reactive Categories Pipeline
+    // Reactive Categories Pipeline (Kept completely locally sourced from Room DB as requested)
     val categories: StateFlow<List<Category>> = categoryDao.getCategoriesByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val transactions: StateFlow<List<Transaction>> = dao.getTransactionsByUser(currentUserId)
+    // Reactive Transactions Pipeline directly from Firebase
+    val transactions: StateFlow<List<Transaction>> = firebaseSource.getTransactionsByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Simultaneously save to RoomDB and Push up to Firebase Realtime Database
@@ -184,6 +186,7 @@ class TransactionViewModel @Inject constructor(
     fun addTransaction(transaction: Transaction, imageUri: Uri?) {
         viewModelScope.launch {
             var finalImageUrl: String? = null
+            val uniqueTxId = UUID.randomUUID().toString()
 
             imageUri?.let { uri ->
                 // Use NonCancellable so the upload finishes even if the UI closes
@@ -206,22 +209,26 @@ class TransactionViewModel @Inject constructor(
                     Log.e("UploadError", "Failed to upload: ${e.message}")
                 }
             }
+            val deterministicId = uniqueTxId.hashCode() and 0xfffffff
 
+            // Map string tracking element fields properly for clean node key bindings
             val transactionToSave = transaction.copy(
+                transactionId = deterministicId, // Safe integer translation fallback
                 userId = currentUserId,
                 receiptUrl = finalImageUrl
             )
 
-            dao.insertTransaction(transactionToSave)
-        }
-
-    }
-
-    fun deleteTransaction(id: Int) {
-        viewModelScope.launch {
-            dao.deleteTransaction(id)
+            // Persist directly inside the remote Firebase database node environment
+            withContext(Dispatchers.IO) {
+                firebaseSource.insertTransaction(currentUserId, transactionToSave, deterministicId.toString())
+            }
         }
     }
 
+    fun deleteTransaction(uniqueFirebaseKeyId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            firebaseSource.deleteTransaction(currentUserId, uniqueFirebaseKeyId)
+        }
+    }
 }
 

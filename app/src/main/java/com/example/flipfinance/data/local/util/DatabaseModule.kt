@@ -2,6 +2,7 @@ package com.example.flipfinance.data.local.util
 
 import android.content.Context
 import com.example.flipfinance.data.local.dao.CategoryDao
+import com.google.firebase.database.FirebaseDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,6 +30,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    /*
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FlipFinanceDatabase {
@@ -45,5 +47,10 @@ object DatabaseModule {
     fun provideCategoryDao(database: FlipFinanceDatabase): CategoryDao {
         return database.categoryDao()
     }
-
+    */
+    @Provides
+    @Singleton
+    fun provideFirebaseTransactionSource(fbDatabase: FirebaseDatabase): FirebaseTransactionSource {
+        return FirebaseTransactionSource(fbDatabase)
+    }
 }

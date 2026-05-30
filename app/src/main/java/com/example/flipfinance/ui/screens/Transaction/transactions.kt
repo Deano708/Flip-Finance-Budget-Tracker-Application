@@ -312,7 +312,9 @@ fun TransactionScreen(
                     transaction = selectedTransaction!!,
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        viewModel.deleteTransaction(selectedTransaction!!.transactionId)
+                        // Convert the integer transactionId to a string so it matches the Firebase path node key
+                        val firebaseNodeKey = selectedTransaction!!.transactionId.toString()
+                        viewModel.deleteTransaction(firebaseNodeKey)
                         showSheet = false
                     },
                     onEdit = { updatedTransaction ->
