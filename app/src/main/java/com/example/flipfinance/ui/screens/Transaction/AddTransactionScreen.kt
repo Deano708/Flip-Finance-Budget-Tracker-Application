@@ -119,6 +119,10 @@ fun AddTransactionScreen(
     var amount by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf("Expense") }
 
+    //Included to incorportate the date time picker for the transcation dates.
+    var transactionDate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
     // Collect our categories flow from the database
     val categoryList by viewModel.categories.collectAsState()
 
@@ -135,6 +139,12 @@ fun AddTransactionScreen(
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         selectedImageUri = uri
+    }
+
+    //incorported to help and display selected date in the UI.
+    val formattedDate = remember(transactionDate) {
+        java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            .format(java.util.Date(transactionDate))
     }
 
     Scaffold(
@@ -155,7 +165,7 @@ fun AddTransactionScreen(
                                 userId = "", // Handled by ViewModel
                                 title = title,
                                 amount = amount.toDoubleOrNull() ?: 0.0,
-                                date = System.currentTimeMillis(),
+                                date = transactionDate,
                                 categoryId = selectedCategoryId,
                                 expenseType = selectedType,
                                 description = notes,
