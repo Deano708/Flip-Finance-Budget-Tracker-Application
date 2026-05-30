@@ -20,11 +20,14 @@ import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
 import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.dao.CategoryDao
+import com.example.flipfinance.data.local.util.FirebaseTransactionSource
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 // For Home
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.UUID
 
@@ -68,24 +71,34 @@ import java.util.UUID
    Availability: https://developer.android.com/training/dependency-injection/hilt-android
 */
 
+/*
+   Title: how to make use of a suspend function in kotlin
+   Author: Microsoft Copilot
+   Date: 30 May 2026
+   Code Version: 1
+   Availability: https://copilot.microsoft.com/shares/3zFig2DCQubzgp23rKDoS
+*/
 
-// Testing for Branch Merge Mis-alignment
+
+
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
-    private val dao: TransactionDao,
+    private val firebaseSource: FirebaseTransactionSource, // Swapped to Firebase transaction source from RoomDB for transaction storage
     private val categoryDao: CategoryDao,
     private val fbDatabase: FirebaseDatabase,
+    private val dao: TransactionDao,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     private val rtdbRef = fbDatabase.getReference("categories/$currentUserId")
 
-    // Reactive Categories Pipeline
+    // Reactive Categories Pipeline (Kept completely locally sourced from Room DB as requested)
     val categories: StateFlow<List<Category>> = categoryDao.getCategoriesByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val transactions: StateFlow<List<Transaction>> = dao.getTransactionsByUser(currentUserId)
+    // Reactive Transactions Pipeline directly from Firebase
+    val transactions: StateFlow<List<Transaction>> = firebaseSource.getTransactionsByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Simultaneously save to RoomDB and Push up to Firebase Realtime Database
@@ -180,46 +193,54 @@ class TransactionViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-
-    fun addTransaction(transaction: Transaction, imageUri: Uri?) {
-        viewModelScope.launch {
+    //made use of suspend to allow for supabase to return the receipt uid so it can be stored in the Database
+    suspend fun addTransaction(transaction: Transaction, imageUri: Uri?) {
+        withContext(Dispatchers.IO) {
             var finalImageUrl: String? = null
+            //unique transaction id
+            val uniqueTxId = UUID.randomUUID().toString()
 
-            imageUri?.let { uri ->
-                // Use NonCancellable so the upload finishes even if the UI closes
+            if (imageUri != null) {
                 try {
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val bytes = inputStream?.readBytes()
+                    val bytes = context.contentResolver.openInputStream(imageUri).use { inputStream ->
+                        inputStream?.readBytes()
+                    }
 
                     if (bytes != null) {
-                        val fileName = "receipt_${System.currentTimeMillis()}.jpg"
-                        val bucket = supabase.storage.from("RecieptStorage")
-
-                        // Perform upload in a context that won't be killed mid-way
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
-                            bucket.upload("receipts/$fileName", bytes)
-                            finalImageUrl = bucket.publicUrl("receipts/$fileName")
+                        val fileName = "receipts/${currentUserId}_${uniqueTxId}.jpg"
+                        //stroing of the image
+                        supabase.storage.from("RecieptStorage").upload(fileName, bytes) {
+                            upsert = true
                         }
-                        Log.d("UploadSuccess", "Generated URL: $finalImageUrl")
+                        //image URL to be stored with transaction info
+                        finalImageUrl = supabase.storage.from("RecieptStorage").publicUrl(fileName)
                     }
                 } catch (e: Exception) {
-                    Log.e("UploadError", "Failed to upload: ${e.message}")
+                    Log.e("UploadError", "Failed to complete Supabase upload sequence: ${e.message}", e)
+                    throw e
                 }
             }
 
-            val transactionToSave = transaction.copy(
+            val finalizedTransaction = transaction.copy(
                 userId = currentUserId,
                 receiptUrl = finalImageUrl
             )
 
-            dao.insertTransaction(transactionToSave)
+            //log errors to help with debugging when uploading a receipt
+            try {
+                val firebaseRef = fbDatabase.getReference("transactions/$currentUserId")
+                firebaseRef.child(uniqueTxId).setValue(finalizedTransaction).await()
+                Log.d("FirebaseSuccess", "Transaction successfully written online!")
+            } catch (dbEx: Exception) {
+                Log.e("DatabaseError", "Firebase execution failure writing transaction: ${dbEx.message}")
+                throw dbEx
+            }
         }
-
     }
 
-    fun deleteTransaction(id: Int) {
-        viewModelScope.launch {
-            dao.deleteTransaction(id)
+    fun deleteTransaction(uniqueFirebaseKeyId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            firebaseSource.deleteTransaction(currentUserId, uniqueFirebaseKeyId)
         }
     }
 
@@ -246,6 +267,4 @@ class TransactionViewModel @Inject constructor(
                 }
         }
     }
-
 }
-

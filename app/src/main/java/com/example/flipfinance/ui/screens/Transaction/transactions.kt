@@ -111,7 +111,6 @@ import kotlinx.coroutines.launch
    Code version : 1
    Availability: https://youtu.be/s3m1PSd7VWc?si=W9D10o-CFGRSg9Ex
 */
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TransactionScreen(
@@ -321,8 +320,8 @@ fun TransactionScreen(
                     categories = categoryList, // <-- IMPLEMENTED STEP 4 HERE
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        val transactionIdKey = selectedTransaction!!.transactionId
-                        viewModel.deleteTransaction(transactionIdKey)
+                        val firebaseNodeKey = selectedTransaction!!.transactionId.toString()
+                        viewModel.deleteTransaction(firebaseNodeKey)
                         showSheet = false
                     },
                     onEdit = { updatedTransaction ->
