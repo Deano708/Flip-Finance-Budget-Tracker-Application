@@ -28,6 +28,7 @@ import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.components.TransactionItem
+import com.example.flipfinance.ui.components.transactions.DateRangeFilterBar
 import com.example.flipfinance.ui.components.transactions.FinanceSummaryCard
 import com.example.flipfinance.ui.components.transactions.TransactionDetailsSheet
 import com.example.flipfinance.ui.components.transactions.TransactionFilterRow
@@ -133,6 +134,9 @@ fun TransactionScreen(
     val filteredTransactions by viewModel.filteredTransactions.collectAsState()
     val summaryData by viewModel.financeSummary.collectAsState()
 
+    // Observe the current Selected Date Range State
+    val selectedDateRange by viewModel.selectedDateRange.collectAsState()
+
     // Dialog UI Overlay Tracker state
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
@@ -223,6 +227,14 @@ fun TransactionScreen(
                 onAddCategoryClick = { showAddCategoryDialog = true },
                 onDeleteCategoryClick = { targetCategory ->
                     viewModel.deleteCustomCategory(targetCategory)
+                }
+            )
+
+            // Date Range Filter Bar
+            DateRangeFilterBar(
+                selectedRange = selectedDateRange,
+                onRangeSelected = { nextRange ->
+                    viewModel.selectedDateRange.value = nextRange
                 }
             )
 

@@ -106,14 +106,17 @@ class TransactionViewModel @Inject constructor(
     val transactions: StateFlow<List<Transaction>> = firebaseSource.getTransactionsByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // State Holder for Selected Date range
+    val selectedDateRange = MutableStateFlow<Pair<Long, Long>?>(null)
 
-    // Unified Search and Filter
+    // Unified Search and Filter Pipeline
     val filteredTransactions: StateFlow<List<Transaction>> = combine(
         transactions,
         categories,
         searchQuery,
-        selectedFilter
-    ) { txList, catList, query, filter ->
+        selectedFilter,
+        selectedDateRange
+    ) { txList, catList, query, filter, dateRange ->
         txList.filter { transaction ->
             // Resolve custom category string display name via reference key lookup
             val resolvedCategoryName = catList.find { it.categoryId == transaction.categoryId }?.name ?: ""
@@ -129,7 +132,15 @@ class TransactionViewModel @Inject constructor(
             val matchesSearch = transaction.title.contains(query, ignoreCase = true) ||
                     transaction.description.contains(query, ignoreCase = true)
 
-            matchesFilter && matchesSearch
+            // Date Range
+            val matchesDate = if (dateRange != null) {
+                // Checking between start and end timestamps
+                transaction.date >= dateRange.first && transaction.date <= dateRange.second
+            } else {
+                true
+            }
+
+            matchesFilter && matchesSearch && matchesDate
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
