@@ -223,5 +223,29 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
+    fun deleteCustomCategory(category: Category) {
+        if (!category.isCustom || currentUserId.isBlank()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            //  Reset transactions Using this category to Prevent Broken Mappings
+            dao.getTransactionsByUser(currentUserId)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1000), emptyList())
+                .value
+                .filter { it.categoryId == category.categoryId }
+                .forEach { affected ->
+                    dao.insertTransaction(affected.copy(categoryId = ""))
+                }
+
+            // Remove from RoomDB
+            categoryDao.deleteCategory(id = category.categoryId, userId = currentUserId)
+
+            // Remove from Firebase RTDB
+            rtdbRef.child(category.categoryId).removeValue()
+                .addOnFailureListener {
+                    Log.e("FirebaseDelete", "Failed to Sync Category Deletion Online")
+                }
+        }
+    }
+
 }
 

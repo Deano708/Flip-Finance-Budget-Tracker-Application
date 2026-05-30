@@ -247,7 +247,10 @@ fun TransactionScreen(
                 selectedFilter = selectedFilter,
                 categories = categoryList,
                 onFilterSelected = { selectedFilter = it },
-                onAddCategoryClick = { showAddCategoryDialog = true }
+                onAddCategoryClick = { showAddCategoryDialog = true },
+                onDeleteCategoryClick = { targetCategory ->
+                    viewModel.deleteCustomCategory(targetCategory)
+                }
             )
 
             // Dynamic Category Spend
