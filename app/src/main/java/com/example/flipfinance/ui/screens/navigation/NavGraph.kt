@@ -23,6 +23,8 @@ import com.example.flipfinance.ViewModel.AuthEvent
 import androidx.compose.animation.ExitTransition
 import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.ViewModel.TransactionViewModel
+import com.example.flipfinance.ui.screens.Achievements.AchievementsScreen
+import com.example.flipfinance.ui.screens.Achievements.InputStreakDetailScreen
 import com.example.flipfinance.ui.screens.Profile.ChangeCredentialsScreen
 import com.example.flipfinance.ui.screens.Settings.SettingsScreen
 import com.example.flipfinance.ui.screens.Transaction.AddTransactionScreen
@@ -114,9 +116,17 @@ fun NavGraph(
         }
 
         composable(Screen.Streak.route) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Budget Goals")
-            }
+            AchievementsScreen(
+                onNavigateToStreakDetail = {
+                    navController.navigate(Screen.StreakDetail.route)
+                }
+            )
+        }
+
+        composable(Screen.StreakDetail.route) {
+            InputStreakDetailScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Settings.route) {

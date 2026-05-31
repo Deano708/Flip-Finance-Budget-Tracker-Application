@@ -40,7 +40,9 @@ abstract class FlipFinanceDatabase : RoomDatabase() {
                     context.applicationContext,
                     FlipFinanceDatabase::class.java,
                     "flip_finance_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
