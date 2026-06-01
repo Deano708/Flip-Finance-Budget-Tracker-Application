@@ -30,8 +30,7 @@ fun HomeScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     onNavigateToAdd: () -> Unit,
     onNavigateToAnalytics: () -> Unit
-)
-{
+) {
     val userProfile by authViewModel.userProfile.collectAsState()
     val firstName = userProfile?.firstName ?: "User"
 
@@ -48,16 +47,16 @@ fun HomeScreen(
     val currencySymbol = settingsState.currency.symbol
     val isDarkMode = settingsState.isDarkMode
 
-    val parsedMinBudget = settingsState.minBudget.toDoubleOrNull() ?: 0.0
-    val parsedMaxBudget = settingsState.maxBudget.toDoubleOrNull() ?: 0.0
+    // 💡 NEW STATE: Dynamic UI states tracking the user's custom limits locally
+    // (Defaults to 0.0 so they stay hidden until the user manually configures them)
+    var activeMinBudget by remember { mutableStateOf(0.0) }
+    var activeMaxBudget by remember { mutableStateOf(0.0) }
 
     val currentIncome = financeSummary.first
     val currentExpenses = totalSpent
 
-    val userEmail = FirebaseAuth.getInstance().currentUser?.email
     val greeting = getGreeting()
 
-    // Pass the isDarkMode preference into your Theme wrapper
     FlipFinanceTheme(darkTheme = isDarkMode) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -85,16 +84,16 @@ fun HomeScreen(
                     GreetingSection(greeting, firstName)
                 }
 
-                // 2. Main Budget Card (Passing down pure limits and total monthly expense)
+                // 2. Main Budget Card
                 item {
                     BudgetProgressCard(
                         totalSpent = currentExpenses,
-                        budget = parsedMaxBudget,
+                        budget = activeMaxBudget,
                         currencySymbol = currencySymbol,
-                        minBudget = parsedMinBudget, // Light Blue Pillar value
-                        maxBudget = parsedMaxBudget, // Dark Blue Pillar value
-                        income = currentIncome,      // Green Pillar value
-                        expenses = currentExpenses   // Pink Pillar value
+                        minBudget = activeMinBudget, // 💡 UPDATED: Pass dynamic live tracks
+                        maxBudget = activeMaxBudget, // 💡 UPDATED: Pass dynamic live tracks
+                        income = currentIncome,
+                        expenses = currentExpenses
                     )
                 }
 
@@ -104,13 +103,20 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        SummaryCard(
+                        // 💡 UPDATED: Replaced original static variance card with the new interactive card
+                        DynamicBudgetCard(
                             modifier = Modifier.weight(1f),
-                            title = "vs Last Month",
-                            value = "${if (comparison >= 0) "+" else ""}${String.format(Locale.ENGLISH, "%.2f", comparison)}%",
-                            icon = if (comparison <= 0) Icons.Default.TrendingDown else Icons.Default.TrendingUp,
-                            iconColor = if (comparison <= 0) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
-                            onClick = onNavigateToAnalytics
+                            currencySymbol = currencySymbol,
+                            currentExpenses = currentExpenses,
+                            minBudget = activeMinBudget,
+                            maxBudget = activeMaxBudget,
+                            icon = Icons.Default.TrendingDown,
+                            iconColor = Color(0xFFFFB703), // Vibrant Amber/Gold
+                            onBudgetsSaved = { newMin, newMax ->
+                                // 💡 UPDATED: Capture inputs saved from dialogue and update state values
+                                activeMinBudget = newMin
+                                activeMaxBudget = newMax
+                            }
                         )
 
                         SummaryCard(

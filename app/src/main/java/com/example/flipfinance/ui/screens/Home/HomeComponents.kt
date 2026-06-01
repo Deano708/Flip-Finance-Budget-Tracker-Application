@@ -18,19 +18,27 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +46,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.Entities.Transaction
@@ -154,21 +163,25 @@ fun BudgetProgressCard(
                     pillColor = Color(0xFFFF8FA3) // Pink/Red
                 )
 
-                FinancialPillColumn(
-                    label = "MIN BGT",
-                    amount = minBudget,
-                    currencySymbol = currencySymbol,
-                    heightRatio = minBudgetRatio,
-                    pillColor = Color(0xFF8AB4F8) // Light Blue
-                )
+                if (minBudget > 0.0) {
+                    FinancialPillColumn(
+                        label = "MIN BGT",
+                        amount = minBudget,
+                        currencySymbol = currencySymbol,
+                        heightRatio = minBudgetRatio,
+                        pillColor = Color(0xFF8AB4F8) // Light blue
+                    )
+                }
 
-                FinancialPillColumn(
-                    label = "MAX BGT",
-                    amount = maxBudget,
-                    currencySymbol = currencySymbol,
-                    heightRatio = maxBudgetRatio,
-                    pillColor = Color(0xFF1A73E8) // Dark Blue
-                )
+                if (maxBudget > 0.0) {
+                    FinancialPillColumn(
+                        label = "MAX BGT",
+                        amount = maxBudget,
+                        currencySymbol = currencySymbol,
+                        heightRatio = maxBudgetRatio,
+                        pillColor = Color(0xFF1A73E8) // Dark blue
+                    )
+                }
             }
         }
     }
@@ -300,4 +313,128 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String, catego
             )
         }
     }
+}
+
+// 1. Updated Interactive Summary Card Component (Placed in bottom-left pill box)
+@Composable
+fun DynamicBudgetCard(
+    modifier: Modifier = Modifier,
+    currencySymbol: String,
+    currentExpenses: Double,
+    maxBudget: Double,
+    minBudget: Double,
+    icon: ImageVector,
+    iconColor: Color,
+    onBudgetsSaved: (Double, Double) -> Unit // Dispatches new amounts to your ViewModel pipeline
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    // Math metrics logic
+    val budgetStatusString = remember(currentExpenses, maxBudget) {
+        if (maxBudget <= 0.0) {
+            "Tap to configure limits"
+        } else if (currentExpenses >= maxBudget) {
+            "Over limit ceiling!"
+        } else {
+            val leftover = maxBudget - currentExpenses
+            "$currencySymbol${String.format(Locale.ENGLISH, "%,.0f", leftover)} remaining"
+        }
+    }
+
+    val displayPercentage = remember(currentExpenses, maxBudget) {
+        if (maxBudget > 0.0) {
+            val percentage = (currentExpenses / maxBudget) * 100
+            String.format(Locale.ENGLISH, "%.1f%% configured", percentage)
+        } else {
+            "+0.00% variance"
+        }
+    }
+
+    SummaryCard(
+        modifier = modifier,
+        title = "Budget Target Tracker",
+        value = displayPercentage,
+        subValue = budgetStatusString,
+        icon = icon,
+        iconColor = iconColor,
+        onClick = { showDialog = true }
+    )
+
+    if (showDialog) {
+        BudgetConfigurationDialog(
+            initialMinBudget = if (minBudget > 0.0) minBudget.toString() else "",
+            initialMaxBudget = if (maxBudget > 0.0) maxBudget.toString() else "",
+            onDismiss = { showDialog = false },
+            onSave = { updatedMin, updatedMax ->
+                onBudgetsSaved(updatedMin, updatedMax)
+                showDialog = false
+            }
+        )
+    }
+}
+
+// 2. Composable Pop-up Input Dialog View
+@Composable
+fun BudgetConfigurationDialog(
+    initialMinBudget: String,
+    initialMaxBudget: String,
+    onDismiss: () -> Unit,
+    onSave: (Double, Double) -> Unit
+) {
+    var minInput by remember { mutableStateOf(initialMinBudget) }
+    var maxInput by remember { mutableStateOf(initialMaxBudget) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Configure Budget Limits",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Specify your lower limit safety targets and strict ceiling limitations below.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+
+                OutlinedTextField(
+                    value = minInput,
+                    onValueChange = { input -> if (input.all { it.isDigit() || it == '.' }) minInput = input },
+                    label = { Text("Minimum Budget Threshold") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = maxInput,
+                    onValueChange = { input -> if (input.all { it.isDigit() || it == '.' }) maxInput = input },
+                    label = { Text("Maximum Budget Ceiling") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val finalMin = minInput.toDoubleOrNull() ?: 0.0
+                    val finalMax = maxInput.toDoubleOrNull() ?: 0.0
+                    onSave(finalMin, finalMax)
+                }
+            ) {
+                Text("Apply Parameters")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Color.Gray)
+            }
+        }
+    )
 }
