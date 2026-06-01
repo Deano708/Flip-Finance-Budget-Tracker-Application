@@ -22,7 +22,11 @@ sealed class Screen(val route: String, val title: String? = null, val icon: Imag
     object Transactions : Screen("transactions", "Transact", Icons.Default.CreditCard)
     object Streak : Screen("achievements", "Streak", Icons.Default.LocalFireDepartment)
     object StreakDetail: Screen("streak_detail")
+
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    object TermsOfService  : Screen("terms_of_service")
+    object PrivacyPolicy   : Screen("privacy_policy")
+    object HelpAndSupport  : Screen("help_and_support")
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
     object ChangeCredentials : Screen("change_credentials", "Change Credentials")
 

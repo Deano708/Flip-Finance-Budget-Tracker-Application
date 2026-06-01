@@ -31,6 +31,9 @@ import com.example.flipfinance.ui.screens.Transaction.AddTransactionScreen
 import com.example.flipfinance.ui.screens.Transaction.TransactionScreen
 // Homescreen
 import com.example.flipfinance.ui.screens.Home.HomeScreen
+import com.example.flipfinance.ui.screens.Settings.HelpAndSupportScreen
+import com.example.flipfinance.ui.screens.Settings.PrivacyPolicyScreen
+import com.example.flipfinance.ui.screens.Settings.TermsOfServiceScreen
 
 /*
    Title: BottomNavigation Jetpack Compose 🚀 | Android Studio | 2024
@@ -130,7 +133,29 @@ fun NavGraph(
         }
 
         composable(Screen.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(
+                onNavigateToTerms   = { navController.navigate(Screen.TermsOfService.route) },
+                onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
+                onNavigateToHelp    = { navController.navigate(Screen.HelpAndSupport.route) }
+            )
+        }
+        //all linked screen found on settings screen
+        composable(Screen.TermsOfService.route) {
+            TermsOfServiceScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.HelpAndSupport.route) {
+            HelpAndSupportScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Profile.route) {
