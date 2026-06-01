@@ -54,7 +54,17 @@ import com.example.flipfinance.ui.theme.PrimaryGreen
 import com.example.flipfinance.ui.theme.SecondaryGold
 import java.util.Locale
 
-// Handles the icon and the personalized Morning text
+/*
+Title: Disclosure of AI Usage in my Assessment.
+• Section: HomeComponents.kt.
+• AI Tool: DeepSeek
+• Purpose/intention : Getting an idea of how to build graphs, and a pop-up button to show information.
+• Date(s) 01/06/2026.
+• https://chat.deepseek.com/share/ecob4xavwmwmmfn21u
+*/
+
+
+// Morning text
 @Composable
 fun GreetingSection(greeting: String, userName: String) {
     Row(
@@ -84,7 +94,7 @@ fun GreetingSection(greeting: String, userName: String) {
     }
 }
 
-// Card at top with updated 4-pillar financial visualization
+// graph at top with 4-pillar financial visualisation
 @Composable
 fun BudgetProgressCard(
     totalSpent: Double,
@@ -204,7 +214,7 @@ fun RowScope.FinancialPillColumn(
     ) {
         Box(
             modifier = Modifier
-                .width(36.dp) // Adjusted slightly from 46.dp to fit 4 columns gracefully
+                .width(36.dp)
                 .fillMaxHeight(heightRatio * 0.75f)
                 .background(
                     color = pillColor,
@@ -315,7 +325,7 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String, catego
     }
 }
 
-// 1. Updated Interactive Summary Card Component (Placed in bottom-left pill box)
+// Interactive Summary Card
 @Composable
 fun DynamicBudgetCard(
     modifier: Modifier = Modifier,
@@ -325,7 +335,7 @@ fun DynamicBudgetCard(
     minBudget: Double,
     icon: ImageVector,
     iconColor: Color,
-    onBudgetsSaved: (Double, Double) -> Unit // Dispatches new amounts to your ViewModel pipeline
+    onBudgetsSaved: (Double, Double) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -341,10 +351,11 @@ fun DynamicBudgetCard(
         }
     }
 
+    // Percentage calculated
     val displayPercentage = remember(currentExpenses, maxBudget) {
         if (maxBudget > 0.0) {
             val percentage = (currentExpenses / maxBudget) * 100
-            String.format(Locale.ENGLISH, "%.1f%% configured", percentage)
+            String.format(Locale.ENGLISH, "%.1f%% allocated", percentage)
         } else {
             "+0.00% variance"
         }
@@ -373,7 +384,7 @@ fun DynamicBudgetCard(
     }
 }
 
-// 2. Composable Pop-up Input Dialog View
+// Composable Pop-up Input Dialog View
 @Composable
 fun BudgetConfigurationDialog(
     initialMinBudget: String,

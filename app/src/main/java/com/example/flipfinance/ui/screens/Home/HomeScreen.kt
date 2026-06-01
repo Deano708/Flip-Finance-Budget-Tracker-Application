@@ -47,13 +47,15 @@ fun HomeScreen(
     val currencySymbol = settingsState.currency.symbol
     val isDarkMode = settingsState.isDarkMode
 
-    // Read persisted budget values directly from settings state.
-    // These are non-zero as soon as the user has saved them previously.
     val activeMinBudget = settingsState.minBudget.toDoubleOrNull() ?: 0.0
     val activeMaxBudget = settingsState.maxBudget.toDoubleOrNull() ?: 0.0
 
     val currentIncome = financeSummary.first
-    val currentExpenses = totalSpent
+    val currentExpenses = remember(transactions) {
+        transactions
+            .filter { it.expenseType == "Expense" } // Matches your TransactionListItem logic
+            .sumOf { it.amount }
+    }
 
     val greeting = getGreeting()
 
@@ -90,8 +92,8 @@ fun HomeScreen(
                         totalSpent = currentExpenses,
                         budget = activeMaxBudget,
                         currencySymbol = currencySymbol,
-                        minBudget = activeMinBudget, //  UPDATED: Pass dynamic live tracks
-                        maxBudget = activeMaxBudget, //  UPDATED: Pass dynamic live tracks
+                        minBudget = activeMinBudget,
+                        maxBudget = activeMaxBudget,
                         income = currentIncome,
                         expenses = currentExpenses
                     )
@@ -103,7 +105,6 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // 💡 UPDATED: Replaced original static variance card with the new interactive card
                         DynamicBudgetCard(
                             modifier = Modifier.weight(1f),
                             currencySymbol = currencySymbol,
@@ -111,7 +112,7 @@ fun HomeScreen(
                             minBudget = activeMinBudget,
                             maxBudget = activeMaxBudget,
                             icon = Icons.Default.TrendingDown,
-                            iconColor = Color(0xFFFFB703), // Vibrant Amber/Gold
+                            iconColor = Color(0xFFFFB703), // Amber/Gold
                             onBudgetsSaved = { newMin, newMax ->
                                 settingsViewModel.onMinBudgetChanged(newMin.toString())
                                 settingsViewModel.onMaxBudgetChanged(newMax.toString())

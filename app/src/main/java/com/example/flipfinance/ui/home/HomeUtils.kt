@@ -20,15 +20,3 @@ fun getGreeting(): String {
     }
 
 }
-
-fun extractNameFromEmail(email: String?): String {
-
-    if (email == null) return "User"
-
-    val namePart = email.substringBefore("@")
-
-    return namePart.replaceFirstChar {
-        it.uppercase()
-    }
-
-}
