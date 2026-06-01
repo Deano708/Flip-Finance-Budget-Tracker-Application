@@ -1,5 +1,6 @@
 package com.example.flipfinance.ui.screens.Transaction
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,12 +28,14 @@ import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.data.local.Entities.Transaction
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.data.local.components.TransactionItem
+import com.example.flipfinance.ui.components.transactions.DateRangeFilterBar
 import com.example.flipfinance.ui.components.transactions.FinanceSummaryCard
 import com.example.flipfinance.ui.components.transactions.TransactionDetailsSheet
 import com.example.flipfinance.ui.components.transactions.TransactionFilterRow
 import com.example.flipfinance.ui.components.transactions.TransactionSearchBar
 import com.example.flipfinance.ui.components.transactions.formatTransactionDate
 import com.example.flipfinance.ui.screens.navigation.Screen
+import kotlinx.coroutines.launch
 
 /*
    Title: Save data in a local database using Room
@@ -108,7 +112,6 @@ import com.example.flipfinance.ui.screens.navigation.Screen
    Code version : 1
    Availability: https://youtu.be/s3m1PSd7VWc?si=W9D10o-CFGRSg9Ex
 */
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TransactionScreen(
@@ -118,46 +121,56 @@ fun TransactionScreen(
     onTransactionClick: (Transaction) -> Unit
 ) {
     val transactionList by viewModel.transactions.collectAsState()
+    val categoryList by viewModel.categories.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
     val currencySymbol = settingsState.currency.symbol
+
     // Filter State
-    var selectedFilter by remember { mutableStateOf("All") }
+    val selectedFilter by viewModel.selectedFilter.collectAsState()
 
     // State for Search
-    var searchQuery by remember { mutableStateOf("") }
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
-    // Logic to Filter the Transactions based on Selection
-    val filteredTransactions = remember(transactionList, selectedFilter, searchQuery) {
-        transactionList.filter { transaction ->
+    val filteredTransactions by viewModel.filteredTransactions.collectAsState()
+    val summaryData by viewModel.financeSummary.collectAsState()
 
-            val matchesFilter = when {
-                selectedFilter.equals("All", ignoreCase = true) -> true
-                selectedFilter.equals("Expense", ignoreCase = true) ||
-                        selectedFilter.equals("Income", ignoreCase = true) -> {
-                    transaction.expenseType.equals(selectedFilter, ignoreCase = true)
-                }
-                else -> transaction.expenseCategory.equals(selectedFilter, ignoreCase = true)
+    // Observe the current Selected Date Range State
+    val selectedDateRange by viewModel.selectedDateRange.collectAsState()
+
+    // Dialog UI Overlay Tracker state
+    var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var newCategoryName by remember { mutableStateOf("") }
+
+    val scope = rememberCoroutineScope()
+
+    if (showAddCategoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddCategoryDialog = false },
+            title = { Text("New Custom Category") },
+            text = {
+                OutlinedTextField(
+                    value = newCategoryName,
+                    onValueChange = { newCategoryName = it },
+                    label = { Text("Category Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newCategoryName.isNotBlank()) {
+                            viewModel.addNewCategory(newCategoryName)
+                            newCategoryName = ""
+                            showAddCategoryDialog = false
+                        }
+                    }
+                ) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddCategoryDialog = false }) { Text("Cancel") }
             }
-
-            // Check Search Query - (Title or Description)
-            val matchesSearch = transaction.title.contains(searchQuery, ignoreCase = true) ||
-                    transaction.description.contains(searchQuery, ignoreCase = true)
-
-            matchesFilter && matchesSearch
-        }
-    }
-
-    //Calculate the Total Amount Based on the Filtered Results
-    val totalSpent = remember(filteredTransactions) {
-        filteredTransactions
-            .filter { it.expenseType.equals("Expense", ignoreCase = true) }
-            .sumOf { it.amount }
-    }
-
-    val totalIncome = remember(filteredTransactions) {
-        filteredTransactions
-            .filter { it.expenseType.equals("Income", ignoreCase = true) }
-            .sumOf { it.amount }
+        )
     }
 
     // for the bottom sheet
@@ -203,20 +216,33 @@ fun TransactionScreen(
             // Search Bar
             TransactionSearchBar(
                 query = searchQuery,
-                onQueryChanged = { searchQuery = it }
+                onQueryChanged = { viewModel.searchQuery.value = it }
             )
 
             // Filter Row
             TransactionFilterRow(
                 selectedFilter = selectedFilter,
-                onFilterSelected = { selectedFilter = it }
+                categories = categoryList,
+                onFilterSelected = { viewModel.selectedFilter.value = it },
+                onAddCategoryClick = { showAddCategoryDialog = true },
+                onDeleteCategoryClick = { targetCategory ->
+                    viewModel.deleteCustomCategory(targetCategory)
+                }
+            )
+
+            // Date Range Filter Bar
+            DateRangeFilterBar(
+                selectedRange = selectedDateRange,
+                onRangeSelected = { nextRange ->
+                    viewModel.selectedDateRange.value = nextRange
+                }
             )
 
             // Dynamic Category Spend
             if (filteredTransactions.isNotEmpty()) {
                 FinanceSummaryCard(
-                    income = totalIncome,
-                    expense = totalSpent,
+                    income = summaryData.first,
+                    expense = summaryData.second,
                     currencySymbol = currencySymbol
                 )
             }
@@ -249,6 +275,7 @@ fun TransactionScreen(
                             TransactionItem(
                                 transaction = transaction,
                                 currencySymbol = currencySymbol,
+                                categories = categoryList,
                                 onClick = {
                                     selectedTransaction = transaction
                                     showSheet = true
@@ -271,13 +298,21 @@ fun TransactionScreen(
             ) {
                 TransactionDetailsSheet(
                     transaction = selectedTransaction!!,
+                    categories = categoryList, // <-- IMPLEMENTED STEP 4 HERE
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        viewModel.deleteTransaction(selectedTransaction!!.transactionId)
+                        val firebaseNodeKey = selectedTransaction!!.transactionId.toString()
+                        viewModel.deleteTransaction(firebaseNodeKey)
                         showSheet = false
                     },
                     onEdit = { updatedTransaction ->
-                        viewModel.addTransaction(updatedTransaction,null) // Room uses @Insert(onConflict = REPLACE)
+                        scope.launch {
+                            try {
+                                viewModel.addTransaction(updatedTransaction, null)
+                            } catch (e: Exception) {
+                                Log.e("EditError", "Failed to update transaction: ${e.message}")
+                            }
+                        }
                         showSheet = false
                     }
                 )

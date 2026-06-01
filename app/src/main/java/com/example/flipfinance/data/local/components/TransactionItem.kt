@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.Entities.Transaction
 
 /*
@@ -50,11 +52,15 @@ import com.example.flipfinance.data.local.Entities.Transaction
 */
 
 @Composable
-fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: () -> Unit) {
+fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: () -> Unit, categories: List<Category>) {
 
     // Get colors from the Theme
     val colorScheme = MaterialTheme.colorScheme
     val isIncome = transaction.expenseType == "Income"
+
+    val CategoryName = remember(transaction.categoryId, categories) {
+        categories.find { it.categoryId == transaction.categoryId }?.name ?: "Other"
+    }
 
     Card(
         modifier = Modifier
@@ -78,7 +84,7 @@ fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: (
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
-                        imageVector = getCategoryIcon(transaction.expenseCategory),
+                        imageVector = getCategoryIcon(CategoryName),
                         contentDescription = null,
                         modifier = Modifier.padding(10.dp),
                         tint = if (isIncome) colorScheme.primary else colorScheme.error
@@ -98,7 +104,7 @@ fun TransactionItem(transaction: Transaction, currencySymbol: String, onClick: (
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = transaction.expenseCategory,
+                        text = CategoryName,
                         style = MaterialTheme.typography.labelMedium,
                         color = colorScheme.onSurfaceVariant
                     )

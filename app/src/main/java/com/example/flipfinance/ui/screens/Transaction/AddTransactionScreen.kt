@@ -20,7 +20,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
@@ -30,11 +33,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +54,8 @@ import com.example.flipfinance.ui.components.transactions.CategoryDropdown
 import com.example.flipfinance.ui.components.transactions.TransactionTypeToggle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.flipfinance.ViewModel.SettingsViewModel
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.size
 
 /*
    Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
@@ -105,6 +113,8 @@ import com.example.flipfinance.ViewModel.SettingsViewModel
    Availability: https://copilot.microsoft.com/shares/4kNf4Zpv4nXXgkE23uoCJ
 */
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(
     viewModel: TransactionViewModel,
@@ -113,14 +123,40 @@ fun AddTransactionScreen(
 ) {
     val settingsState by settingsViewModel.uiState.collectAsState()
     val currencySymbol = settingsState.currency.symbol
+
+    val scope = rememberCoroutineScope()
+    var isSaving by remember { mutableStateOf(false) }
+
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf("Expense") }
-    var selectedCategory by remember { mutableStateOf("Food") }
+
+    //Included to incorportate the date time picker for the transcation dates.
+    var transactionDate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    // Collect our categories flow from the database
+    val categoryList by viewModel.categories.collectAsState()
+
+    var selectedCategoryId by remember { mutableStateOf("") }
+    // Auto Select the first Available category ID once the list loads
+    LaunchedEffect(categoryList) {
+        if (selectedCategoryId.isBlank() && categoryList.isNotEmpty()) {
+            selectedCategoryId = categoryList.first().categoryId
+        }
+    }
+
     var notes by remember { mutableStateOf("") }
+
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         selectedImageUri = uri
+    }
+
+    //incorported to help and display selected date in the UI.
+    val formattedDate = remember(transactionDate) {
+        java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+            .format(java.util.Date(transactionDate))
     }
 
     Scaffold(
@@ -130,132 +166,207 @@ fun AddTransactionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onNavigateBack) {
-                    Text("Cancel", color = colorScheme.error)
+                // Disable Cancel button while saving to prevent context tearing down
+                TextButton(
+                    onClick = onNavigateBack,
+                    enabled = !isSaving
+                ) {
+                    Text("Cancel", color = if (isSaving) Color.Gray else colorScheme.error)
                 }
+
                 Text("Add Transaction", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                TextButton(onClick = {
-                    if (title.isNotBlank() && amount.isNotBlank()) {
-                        viewModel.addTransaction(
-                            Transaction(
-                                userId = "", // Handled by ViewModel
-                                title = title,
-                                amount = amount.toDoubleOrNull() ?: 0.0,
-                                date = System.currentTimeMillis(),
-                                expenseCategory = selectedCategory,
-                                expenseType = selectedType,
-                                description = notes,
-                                receiptUrl = null // This will be updated after upload
-                            ),
-                            imageUri = selectedImageUri // Pass the URI here!
-                        )
-                        onNavigateBack()
+
+                // Save Button with a loadinc circle when uploading image to supabase
+                TextButton(
+                    enabled = !isSaving && title.isNotBlank() && amount.isNotBlank(),
+                    onClick = {
+                        isSaving = true // Freeze UI to show progress
+
+                        scope.launch {
+                            try {
+
+                                viewModel.addTransaction(
+                                    Transaction(
+                                        userId = "",
+                                        title = title,
+                                        amount = amount.toDoubleOrNull() ?: 0.0,
+                                        date = transactionDate,
+                                        categoryId = selectedCategoryId,
+                                        expenseType = selectedType,
+                                        description = notes,
+                                        receiptUrl = null
+                                    ),
+                                    imageUri = selectedImageUri
+                                )
+
+                                isSaving = false
+                                onNavigateBack()
+                            } catch (e: Exception) {
+                                isSaving = false
+                            }
+                        }
                     }
-                }) {
-                    Text("Save", fontWeight = FontWeight.Bold, color = colorScheme.primary)
+                ) {
+                    if (isSaving) {
+                        // Tiny circle at top right indicating saving
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = colorScheme.primary
+                        )
+                    } else {
+                        Text(
+                            "Save",
+                            fontWeight = FontWeight.Bold,
+                            color = if (title.isNotBlank() && amount.isNotBlank()) colorScheme.primary else Color.Gray
+                        )
+                    }
                 }
             }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Expense/Income Toggle
-            TransactionTypeToggle(
-                selectedType = selectedType,
-                onTypeSelected = { selectedType = it }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("Details", color = colorScheme.onSurfaceVariant)
-
-            // Details Card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                shape = MaterialTheme.shapes.medium, // Align with Shape.kt
-                border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f)),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                Column(Modifier.padding(16.dp)) {
-                    TextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        placeholder = { Text("Title") },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedTextColor = colorScheme.onSurface,
-                            unfocusedTextColor = colorScheme.onSurface,
-                            cursorColor = colorScheme.secondary
-                        )
-                    )
+                TransactionTypeToggle(
+                    selectedType = selectedType,
+                    onTypeSelected = { if (!isSaving) selectedType = it }
+                )
 
-                    Divider(color = colorScheme.outlineVariant.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+                Text("Details", color = colorScheme.onSurfaceVariant)
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(currencySymbol, style = MaterialTheme.typography.headlineMedium, color = colorScheme.primary) //dynamic currency symbol
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                    shape = MaterialTheme.shapes.medium,
+                    border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f)),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
                         TextField(
-                            value = amount,
-                            onValueChange = { amount = it },
-                            placeholder = { Text("Amount") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            textStyle = MaterialTheme.typography.headlineMedium.copy(color = colorScheme.onSurface),
+                            value = title,
+                            onValueChange = { title = it },
+                            placeholder = { Text("Title") },
+                            enabled = !isSaving,
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
                                 focusedTextColor = colorScheme.onSurface,
-                                unfocusedTextColor = colorScheme.onSurface
+                                unfocusedTextColor = colorScheme.onSurface,
+                                cursorColor = colorScheme.secondary
                             )
                         )
-                    }
-                }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Category", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
-            CategoryDropdown(selectedCategory) { selectedCategory = it }
+                        Divider(color = colorScheme.outlineVariant.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 8.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Receipt (Optional)", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp) // Slightly smaller to fit with your Notes field
-                    .padding(vertical = 4.dp)
-                    .clickable { launcher.launch("image/*") },
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f))
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    if (selectedImageUri != null) {
-                        Text("Receipt Attached", color = colorScheme.primary, fontWeight = FontWeight.Bold)
-                    } else {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Tap to add receipt", color = colorScheme.onSurfaceVariant)
+                            Text(currencySymbol, style = MaterialTheme.typography.headlineMedium, color = colorScheme.primary)
+                            TextField(
+                                value = amount,
+                                onValueChange = { amount = it },
+                                placeholder = { Text("Amount") },
+                                enabled = !isSaving,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                textStyle = MaterialTheme.typography.headlineMedium.copy(color = colorScheme.onSurface),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedTextColor = colorScheme.onSurface,
+                                    unfocusedTextColor = colorScheme.onSurface
+                                )
+                            )
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Notes", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                modifier = Modifier.fillMaxWidth().height(150.dp),
-                shape = MaterialTheme.shapes.medium,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colorScheme.secondary,
-                    unfocusedBorderColor = colorScheme.outlineVariant.copy(alpha = 0.3f)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Transaction Date", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
+
+                OutlinedTextField(
+                    value = formattedDate,
+                    onValueChange = {},
+                    modifier = Modifier.fillMaxWidth().clickable { if (!isSaving) showDatePicker = true },
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledBorderColor = colorScheme.outlineVariant.copy(alpha = 0.3f),
+                        disabledTextColor = colorScheme.onSurface
+                    ),
+                    shape = MaterialTheme.shapes.medium
                 )
-            )
-            Spacer(modifier = Modifier.height(24.dp))
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = transactionDate)
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                transactionDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                                showDatePicker = false
+                            }) { Text("OK") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                        }
+                    ) { DatePicker(state = datePickerState) }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Category", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
+
+                CategoryDropdown(
+                    selectedCategoryId = selectedCategoryId,
+                    categoriesList = categoryList,
+                    onCategorySelected = { clickedCategory ->
+                        if (!isSaving) selectedCategoryId = clickedCategory.categoryId
+                    },
+                    onAddCategory = { freshName ->
+                        if (!isSaving) viewModel.addNewCategory(freshName)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Receipt (Optional)", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .padding(vertical = 4.dp)
+                        .clickable { if (!isSaving) launcher.launch("image/*") },
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                    border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f))
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        if (selectedImageUri != null) {
+                            Text("Receipt Attached", color = colorScheme.primary, fontWeight = FontWeight.Bold)
+                        } else {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Tap to add receipt", color = colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Notes", style = MaterialTheme.typography.labelLarge, color = colorScheme.onSurfaceVariant)
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    enabled = !isSaving,
+                    modifier = Modifier.fillMaxWidth().height(150.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.secondary,
+                        unfocusedBorderColor = colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }

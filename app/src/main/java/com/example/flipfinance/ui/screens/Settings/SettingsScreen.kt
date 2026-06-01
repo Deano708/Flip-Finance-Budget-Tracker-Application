@@ -123,22 +123,22 @@ fun SettingsScreen(
                 }
             }
 
-            // GROUP 3: Monthly Budget
-            SettingsGroupCard(title = "Monthly Budget Limits") {
-                SettingsTextField(
-                    value = state.minBudget,
-                    label = "Minimum Budget",
-                    onValueChange = { viewModel.onMinBudgetChanged(it) },
-                    symbol = state.currency.symbol
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SettingsTextField(
-                    value = state.maxBudget,
-                    label = "Maximum Budget",
-                    onValueChange = { viewModel.onMaxBudgetChanged(it) },
-                    symbol = state.currency.symbol
-                )
-            }
+//            // GROUP 3: Monthly Budget
+//            SettingsGroupCard(title = "Monthly Budget Limits") {
+//                SettingsTextField(
+//                    value = state.minBudget,
+//                    label = "Minimum Budget",
+//                    onValueChange = { viewModel.onMinBudgetChanged(it) },
+//                    symbol = state.currency.symbol
+//                )
+//                Spacer(modifier = Modifier.height(12.dp))
+//                SettingsTextField(
+//                    value = state.maxBudget,
+//                    label = "Maximum Budget",
+//                    onValueChange = { viewModel.onMaxBudgetChanged(it) },
+//                    symbol = state.currency.symbol
+//                )
+//            }
 
             // GROUP 4: About & Links
             SettingsGroupCard(title = "About") {

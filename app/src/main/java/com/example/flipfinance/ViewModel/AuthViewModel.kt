@@ -3,12 +3,14 @@ package com.example.flipfinance.ViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flipfinance.domain.model.User
+import com.example.flipfinance.domain.model.UserProfile
 import com.example.flipfinance.domain.repository.AuthRepository
 import com.example.flipfinance.domain.util.AuthValidator
 import com.example.flipfinance.domain.util.PasswordResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -106,6 +108,35 @@ class AuthViewModel @Inject constructor(
                 .onSuccess { if (shouldAuthenticate) _isAuthenticated.value = true }
                 .onFailure { _error.value = it.message }
             _isLoading.value = false
+        }
+    }
+
+    //For Home
+    // Logic to fetch the profile from Firestore or your Repository using the UID
+    private val _userProfile = MutableStateFlow<UserProfile?>(null)
+    val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
+
+    init {
+        fetchUserProfile()
+    }
+
+    //For home
+    private fun fetchUserProfile() {
+        viewModelScope.launch {
+            // Collect the currentUser flow from the repository
+            repository.currentUser.collect { user ->
+                if (user != null) {
+                    // Fetch the detailed profile using the user's UID
+                    val result = repository.getUserProfile(user.uid)
+                    result.onSuccess { profile ->
+                        _userProfile.value = profile
+                    }.onFailure {
+                        _error.value = "Failed to load profile: ${it.message}"
+                    }
+                } else {
+                    _userProfile.value = null
+                }
+            }
         }
     }
 

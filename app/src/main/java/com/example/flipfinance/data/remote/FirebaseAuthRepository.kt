@@ -37,6 +37,12 @@ import com.example.flipfinance.domain.model.User
    Availability: https://youtu.be/nVhPqPpgndM?si=-2e5lkDbB83rUAoS
 */
 
+//Title: Read and Write Data on Android
+//Author: Firebase Documentation
+//Date: 2024
+//Date accessed: 29 April 2026
+//Availability: https://firebase.google.com/docs/database/android/read-and-write
+
 class FirebaseAuthRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firebaseDatabase: FirebaseDatabase
@@ -90,5 +96,27 @@ class FirebaseAuthRepository @Inject constructor(
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> = runCatching {
         firebaseAuth.sendPasswordResetEmail(email).await()
         Unit
+    }
+
+    // For Home
+    override suspend fun getUserProfile(uid: String): Result<com.example.flipfinance.domain.model.UserProfile> = runCatching {
+        // Reference to the specific user node in the Realtime Database
+        val snapshot = firebaseDatabase.reference
+            .child("users")
+            .child(uid)
+            .get()
+            .await()
+
+        // Map the database snapshot to UserProfile data class
+        val firstName = snapshot.child("firstName").value as? String ?: ""
+        val lastName = snapshot.child("lastName").value as? String ?: ""
+        val email = firebaseAuth.currentUser?.email ?: ""
+
+        com.example.flipfinance.domain.model.UserProfile(
+            uid = uid,
+            firstName = firstName,
+            lastName = lastName,
+            email = email
+        )
     }
 }

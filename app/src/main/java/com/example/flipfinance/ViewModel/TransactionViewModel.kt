@@ -1,5 +1,6 @@
 package com.example.flipfinance.ViewModel
 
+import android.R.attr.category
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -17,10 +18,19 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
-import androidx.lifecycle.viewModelScope
+import com.example.flipfinance.data.local.Entities.Category
+import com.example.flipfinance.data.local.dao.CategoryDao
+import com.example.flipfinance.data.local.util.FirebaseTransactionSource
+import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 // For Home
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.util.Calendar
+import java.util.UUID
 
 /*
    Title: Save data in a local database using Room
@@ -62,24 +72,113 @@ import java.util.Calendar
    Availability: https://developer.android.com/training/dependency-injection/hilt-android
 */
 
+/*
+   Title: how to make use of a suspend function in kotlin
+   Author: Microsoft Copilot
+   Date: 30 May 2026
+   Code Version: 1
+   Availability: https://copilot.microsoft.com/shares/3zFig2DCQubzgp23rKDoS
+*/
+
 
 
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
+    private val firebaseSource: FirebaseTransactionSource, // Swapped to Firebase transaction source from RoomDB for transaction storage
+    private val categoryDao: CategoryDao,
+    private val fbDatabase: FirebaseDatabase,
     private val dao: TransactionDao,
-    @ApplicationContext private val context: Context // Hilt provides this automatically
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    private val rtdbRef = fbDatabase.getReference("categories/$currentUserId")
 
-    val transactions: StateFlow<List<Transaction>> = dao.getTransactionsByUser(currentUserId)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+    // State Holders for Filter UI selection
+    val searchQuery = MutableStateFlow("")
+    val selectedFilter = MutableStateFlow("All")
+
+    // Reactive Categories Pipeline (Kept completely locally sourced from Room DB as requested)
+    val categories: StateFlow<List<Category>> = categoryDao.getCategoriesByUser(currentUserId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Reactive Transactions Pipeline directly from Firebase
+    val transactions: StateFlow<List<Transaction>> = firebaseSource.getTransactionsByUser(currentUserId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // State Holder for Selected Date range
+    val selectedDateRange = MutableStateFlow<Pair<Long, Long>?>(null)
+
+    // Unified Search and Filter Pipeline
+    val filteredTransactions: StateFlow<List<Transaction>> = combine(
+        transactions,
+        categories,
+        searchQuery,
+        selectedFilter,
+        selectedDateRange
+    ) { txList, catList, query, filter, dateRange ->
+        txList.filter { transaction ->
+            // Resolve custom category string display name via reference key lookup
+            val resolvedCategoryName = catList.find { it.categoryId == transaction.categoryId }?.name ?: ""
+
+            val matchesFilter = when {
+                filter.equals("All", ignoreCase = true) -> true
+                filter.equals("Expense", ignoreCase = true) || filter.equals("Income", ignoreCase = true) -> {
+                    transaction.expenseType.equals(filter, ignoreCase = true)
+                }
+                else -> resolvedCategoryName.equals(filter, ignoreCase = true)
+            }
+
+            val matchesSearch = transaction.title.contains(query, ignoreCase = true) ||
+                    transaction.description.contains(query, ignoreCase = true)
+
+            // Date Range
+            val matchesDate = if (dateRange != null) {
+                // Checking between start and end timestamps
+                transaction.date >= dateRange.first && transaction.date <= dateRange.second
+            } else {
+                true
+            }
+
+            matchesFilter && matchesSearch && matchesDate
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+     // Dynamic Income/Expense Summary
+    val financeSummary: StateFlow<Pair<Double, Double>> = filteredTransactions
+        .map { list ->
+            val income = list.filter { it.expenseType.equals("Income", ignoreCase = true) }.sumOf { it.amount }
+            val expense = list.filter { it.expenseType.equals("Expense", ignoreCase = true) }.sumOf { it.amount }
+            Pair(income, expense)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(0.0, 0.0))
+
+
+    // Simultaneously save to RoomDB and Push up to Firebase Realtime Database
+    fun addNewCategory(name: String) {
+        if (name.isBlank() || currentUserId.isBlank()) return
+
+        val uniqueId = UUID.randomUUID().toString()
+        val newCategory = Category(
+            categoryId = uniqueId,
+            userId = currentUserId,
+            name = name.trim(),
+            isCustom = true
         )
 
-    // Home screen implementation - for total spent in this month
+        viewModelScope.launch(Dispatchers.IO) {
+            // Write locally - (Offline Mode)
+            categoryDao.insertCategory(newCategory)
+
+            // Write Online (Firebase Synchronization)
+            rtdbRef.child(uniqueId).setValue(newCategory)
+                .addOnFailureListener {
+                    // On Failure Create Code - On to You mr Fraser
+                }
+        }
+    }
+
+
+    // Home screen implementation - For total spent in this month
     val totalSpentThisMonth: StateFlow<Double> = transactions
         .map { list ->
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
@@ -96,9 +195,11 @@ class TransactionViewModel @Inject constructor(
 
     // Home - Highest Category Spent
     val highestCategorySpend: StateFlow<Pair<String, Double>?> = transactions
-        .map { list ->
-            list.filter { it.expenseType == "Expense" }
-                .groupBy { it.expenseCategory }
+        .combine(categories) { txList, catList ->
+            txList.filter { it.expenseType == "Expense" }
+                .groupBy { tx ->
+                    catList.find { it.categoryId == tx.categoryId }?.name ?: "Unknown"
+                }
                 .mapValues { entry -> entry.value.sumOf { it.amount } }
                 .toList()
                 .maxByOrNull { it.second }
@@ -106,7 +207,6 @@ class TransactionViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // Home - Data for Daily Spending Graph
-    // Groups spending by day of the month for the graph UI
     val dailySpendingMap: StateFlow<Map<Int, Double>> = transactions
         .map { list ->
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
@@ -144,48 +244,78 @@ class TransactionViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-
-    fun addTransaction(transaction: Transaction, imageUri: Uri?) {
-        viewModelScope.launch {
+    //made use of suspend to allow for supabase to return the receipt uid so it can be stored in the Database
+    suspend fun addTransaction(transaction: Transaction, imageUri: Uri?) {
+        withContext(Dispatchers.IO) {
             var finalImageUrl: String? = null
+            //unique transaction id
+            val uniqueTxId = UUID.randomUUID().toString()
 
-            imageUri?.let { uri ->
-                // Use NonCancellable so the upload finishes even if the UI closes
+            if (imageUri != null) {
                 try {
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val bytes = inputStream?.readBytes()
+                    val bytes = context.contentResolver.openInputStream(imageUri).use { inputStream ->
+                        inputStream?.readBytes()
+                    }
 
                     if (bytes != null) {
-                        val fileName = "receipt_${System.currentTimeMillis()}.jpg"
-                        val bucket = supabase.storage.from("RecieptStorage")
-
-                        // Perform upload in a context that won't be killed mid-way
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
-                            bucket.upload("receipts/$fileName", bytes)
-                            finalImageUrl = bucket.publicUrl("receipts/$fileName")
+                        val fileName = "receipts/${currentUserId}_${uniqueTxId}.jpg"
+                        //stroing of the image
+                        supabase.storage.from("RecieptStorage").upload(fileName, bytes) {
+                            upsert = true
                         }
-                        Log.d("UploadSuccess", "Generated URL: $finalImageUrl")
+                        //image URL to be stored with transaction info
+                        finalImageUrl = supabase.storage.from("RecieptStorage").publicUrl(fileName)
                     }
                 } catch (e: Exception) {
-                    Log.e("UploadError", "Failed to upload: ${e.message}")
+                    Log.e("UploadError", "Failed to complete Supabase upload sequence: ${e.message}", e)
+                    throw e
                 }
             }
 
-            val transactionToSave = transaction.copy(
+            val finalizedTransaction = transaction.copy(
                 userId = currentUserId,
                 receiptUrl = finalImageUrl
             )
 
-            dao.insertTransaction(transactionToSave)
+            //log errors to help with debugging when uploading a receipt
+            try {
+                val firebaseRef = fbDatabase.getReference("transactions/$currentUserId")
+                firebaseRef.child(uniqueTxId).setValue(finalizedTransaction).await()
+                Log.d("FirebaseSuccess", "Transaction successfully written online!")
+            } catch (dbEx: Exception) {
+                Log.e("DatabaseError", "Firebase execution failure writing transaction: ${dbEx.message}")
+                throw dbEx
+            }
         }
-
     }
 
-    fun deleteTransaction(id: Int) {
-        viewModelScope.launch {
-            dao.deleteTransaction(id)
+    fun deleteTransaction(uniqueFirebaseKeyId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            firebaseSource.deleteTransaction(currentUserId, uniqueFirebaseKeyId)
         }
     }
 
+    fun deleteCustomCategory(category: Category) {
+        if (!category.isCustom || currentUserId.isBlank()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            //  Reset transactions Using this category to Prevent Broken Mappings
+            dao.getTransactionsByUser(currentUserId)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1000), emptyList())
+                .value
+                .filter { it.categoryId == category.categoryId }
+                .forEach { affected ->
+                    dao.insertTransaction(affected.copy(categoryId = ""))
+                }
+
+            // Remove from RoomDB
+            categoryDao.deleteCategory(id = category.categoryId, userId = currentUserId)
+
+            // Remove from Firebase RTDB
+            rtdbRef.child(category.categoryId).removeValue()
+                .addOnFailureListener {
+                    Log.e("FirebaseDelete", "Failed to Sync Category Deletion Online")
+                }
+        }
+    }
 }
-

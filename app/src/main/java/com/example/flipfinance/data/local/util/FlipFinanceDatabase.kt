@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.Entities.Transaction
+import com.example.flipfinance.data.local.dao.CategoryDao
 
 /*
    Title: Tutorial: The FULL Beginner Guide for Room in Android | Local Database Tutorial for Android
@@ -23,9 +25,10 @@ import com.example.flipfinance.data.local.Entities.Transaction
 */
 
 // instantiates the database so it can be used througout the app.
-@Database(entities = [Transaction::class], version = 1, exportSchema = false)
+@Database(entities = [Transaction::class, Category::class], version = 3, exportSchema = false)
 abstract class FlipFinanceDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
+    abstract fun categoryDao(): CategoryDao
 
     companion object {
         @Volatile
@@ -37,7 +40,9 @@ abstract class FlipFinanceDatabase : RoomDatabase() {
                     context.applicationContext,
                     FlipFinanceDatabase::class.java,
                     "flip_finance_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }
