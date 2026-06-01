@@ -15,11 +15,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.flipfinance.ViewModel.AuthViewModel
 import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.ViewModel.TransactionViewModel
-import com.example.flipfinance.ui.home.extractNameFromEmail
 import com.example.flipfinance.ui.home.getGreeting
 import com.example.flipfinance.ui.theme.FlipFinanceTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -32,28 +30,31 @@ fun HomeScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     onNavigateToAdd: () -> Unit,
     onNavigateToAnalytics: () -> Unit
-) {
-    // For Home
+)
+{
     val userProfile by authViewModel.userProfile.collectAsState()
     val firstName = userProfile?.firstName ?: "User"
 
-    // Transaction Data
+    // Transaction Data Streams
     val transactions by transactionViewModel.transactions.collectAsState()
     val categoryList by transactionViewModel.categories.collectAsState()
     val totalSpent by transactionViewModel.totalSpentThisMonth.collectAsState()
     val topCategory by transactionViewModel.highestCategorySpend.collectAsState()
     val comparison by transactionViewModel.spendingComparison.collectAsState()
+    val financeSummary by transactionViewModel.financeSummary.collectAsState()
 
-    // Settings Data
+    // Settings Stream
     val settingsState by settingsViewModel.uiState.collectAsState()
-
-    // Extracting user preferences from settingsState
     val currencySymbol = settingsState.currency.symbol
-    val userMaxBudget = settingsState.maxBudget.toDoubleOrNull() ?: 44500.0
     val isDarkMode = settingsState.isDarkMode
 
+    val parsedMinBudget = settingsState.minBudget.toDoubleOrNull() ?: 0.0
+    val parsedMaxBudget = settingsState.maxBudget.toDoubleOrNull() ?: 0.0
+
+    val currentIncome = financeSummary.first
+    val currentExpenses = totalSpent
+
     val userEmail = FirebaseAuth.getInstance().currentUser?.email
-    val userName = extractNameFromEmail(userEmail)
     val greeting = getGreeting()
 
     // Pass the isDarkMode preference into your Theme wrapper
@@ -84,13 +85,16 @@ fun HomeScreen(
                     GreetingSection(greeting, firstName)
                 }
 
-                // 2. Main Budget Card (Updated with dynamic currency and budget)
+                // 2. Main Budget Card (Passing down pure limits and total monthly expense)
                 item {
                     BudgetProgressCard(
-                        totalSpent = totalSpent,
-                        budget = userMaxBudget,
-                        primaryColor = MaterialTheme.colorScheme.primary,
-                        currencySymbol = currencySymbol
+                        totalSpent = currentExpenses,
+                        budget = parsedMaxBudget,
+                        currencySymbol = currencySymbol,
+                        minBudget = parsedMinBudget, // Light Blue Pillar value
+                        maxBudget = parsedMaxBudget, // Dark Blue Pillar value
+                        income = currentIncome,      // Green Pillar value
+                        expenses = currentExpenses   // Pink Pillar value
                     )
                 }
 
@@ -113,7 +117,6 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f),
                             title = "Highest Spend",
                             value = topCategory?.first ?: "N/A",
-                            // Displaying dynamic currency symbol
                             subValue = "$currencySymbol ${String.format(Locale.ENGLISH, "%.2f", topCategory?.second ?: 0.0)}",
                             icon = Icons.Default.PieChart,
                             iconColor = MaterialTheme.colorScheme.secondary,
@@ -134,7 +137,7 @@ fun HomeScreen(
                 items(transactions.take(5)) { transaction ->
                     TransactionListItem(
                         transaction = transaction,
-                        currencySymbol = currencySymbol, // Pass symbol to list items
+                        currencySymbol = currencySymbol,
                         categories = categoryList
                     )
                 }

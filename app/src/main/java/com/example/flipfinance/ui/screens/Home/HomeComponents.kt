@@ -6,13 +6,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,36 +45,17 @@ import com.example.flipfinance.ui.theme.PrimaryGreen
 import com.example.flipfinance.ui.theme.SecondaryGold
 import java.util.Locale
 
-//Title: Material Design 3 - Cards
-//Author: Google
-//Date: 2024
-//Date accessed: 29 April 2026
-//Availability: https://m3.material.io/components/cards/overview
-
-//Title: Layouts in Jetpack Compose
-//Author: Android Developers Documentation
-//Date: 2024
-//Date accessed: 29 April 2026
-//Availability: https://developer.android.com/develop/ui/compose/layouts
-
-//Title: Graphics in Jetpack Compose (Brushes and Gradients)
-//Author: Google
-//Date: 2024
-//Date accessed: 29 April 2026
-//Availability: https://developer.android.com/develop/ui/compose/graphics/draw/modifiers#brush
-
-// handles the icon and the personalized Morning text
+// Handles the icon and the personalized Morning text
 @Composable
 fun GreetingSection(greeting: String, userName: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Sun/Moon icon based on the greeting
         Icon(
             imageVector = if (greeting.contains("Morning")) Icons.Default.WbSunny else Icons.Default.NightsStay,
             contentDescription = null,
-            tint = SecondaryGold, // Using your theme color
+            tint = SecondaryGold,
             modifier = Modifier.size(32.dp)
         )
         Spacer(Modifier.width(12.dp))
@@ -91,63 +75,151 @@ fun GreetingSection(greeting: String, userName: String) {
     }
 }
 
-
-// card at the top. It uses a LinearProgressIndicator
+// Card at top with updated 4-pillar financial visualization
 @Composable
-fun BudgetProgressCard(totalSpent: Double, budget: Double, primaryColor: Color, currencySymbol: String) {
-    val progress = if (budget > 0) (totalSpent / budget).toFloat().coerceIn(0f, 1f) else 0f
-    val percentage = (progress * 100).toInt()
+fun BudgetProgressCard(
+    totalSpent: Double,
+    budget: Double,
+    currencySymbol: String,
+    minBudget: Double,
+    maxBudget: Double,
+    income: Double,
+    expenses: Double,
+    modifier: Modifier = Modifier
+) {
+    // 1. Math normalization setup
+    // Find the absolute highest ceiling value across all 4 pillars to compute perfect relative height ratios
+    val maxValue = maxOf(income, expenses, minBudget, maxBudget, 1.0)
 
-    val barColor = if (progress > 0.8f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val incomeRatio = (income / maxValue).toFloat().coerceIn(0.10f, 1f)
+    val expensesRatio = (expenses / maxValue).toFloat().coerceIn(0.10f, 1f)
+    val minBudgetRatio = (minBudget / maxValue).toFloat().coerceIn(0.10f, 1f)
+    val maxBudgetRatio = (maxBudget / maxValue).toFloat().coerceIn(0.10f, 1f)
+
     Card(
-        shape = RoundedCornerShape(28.dp),
-        modifier = Modifier.fillMaxWidth().height(190.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFFB2D0F0), Color(0xFFF9D18C))
-                    )
-                )
-                .padding(24.dp)
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column {
-                Text("Total Spent This Month", style = MaterialTheme.typography.labelMedium)
-                // DYNAMIC CURRENCY APPLIED HERE
-                Text(
-                    text = "$currencySymbol ${String.format("%,.2f", totalSpent)}",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.ExtraBold
+            // Title / Header
+            Text(
+                text = "Monthly Budget Summary",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Text Overview Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(text = "Income", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(text = "$currencySymbol${String.format(Locale.ENGLISH, "%,.2f", income)}", style = MaterialTheme.typography.bodyLarge)
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(text = "Expenses", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(text = "$currencySymbol${String.format(Locale.ENGLISH, "%,.2f", expenses)}", style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Graph Visualization containing all 4 Pillars side by side
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                FinancialPillColumn(
+                    label = "INCOME",
+                    amount = income,
+                    currencySymbol = currencySymbol,
+                    heightRatio = incomeRatio,
+                    pillColor = Color(0xFF42E2B8) // Green
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                FinancialPillColumn(
+                    label = "EXPENSES",
+                    amount = expenses,
+                    currencySymbol = currencySymbol,
+                    heightRatio = expensesRatio,
+                    pillColor = Color(0xFFFF8FA3) // Pink/Red
+                )
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Text("$percentage% Used", style = MaterialTheme.typography.labelSmall)
-                }
+                FinancialPillColumn(
+                    label = "MIN BGT",
+                    amount = minBudget,
+                    currencySymbol = currencySymbol,
+                    heightRatio = minBudgetRatio,
+                    pillColor = Color(0xFF8AB4F8) // Light Blue
+                )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(12.dp).clip(CircleShape),
-                    color = primaryColor,
-                    trackColor = Color.White.copy(alpha = 0.5f)
+                FinancialPillColumn(
+                    label = "MAX BGT",
+                    amount = maxBudget,
+                    currencySymbol = currencySymbol,
+                    heightRatio = maxBudgetRatio,
+                    pillColor = Color(0xFF1A73E8) // Dark Blue
                 )
             }
         }
+    }
+}
+
+@Composable
+fun RowScope.FinancialPillColumn(
+    label: String,
+    amount: Double,
+    currencySymbol: String,
+    heightRatio: Float,
+    pillColor: Color
+) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight(),
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .width(36.dp) // Adjusted slightly from 46.dp to fit 4 columns gracefully
+                .fillMaxHeight(heightRatio * 0.75f)
+                .background(
+                    color = pillColor,
+                    shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+                )
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
-            text = "$currencySymbol ${String.format("%,.2f", totalSpent)}",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.ExtraBold
+            text = "$currencySymbol${String.format(Locale.ENGLISH, "%,.0f", amount)}",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         )
     }
 }
 
-// the reusable "Insight" card for the bottom row.
+// Reusable Insight Card
 @Composable
 fun SummaryCard(
     modifier: Modifier = Modifier,
@@ -159,7 +231,9 @@ fun SummaryCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier.height(130.dp).clickable { onClick() },
+        modifier = modifier
+            .height(130.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -174,24 +248,27 @@ fun SummaryCard(
     }
 }
 
-// maps Transaction entity from Room to a row in the "Recent Transactions" section
+// Maps Transaction entity to a row layout
 @Composable
 fun TransactionListItem(transaction: Transaction, currencySymbol: String, categories: List<Category>) {
     val isExpense = transaction.expenseType == "Expense"
 
-    val CategoryName = remember(transaction.categoryId, categories) {
+    val categoryName = remember(transaction.categoryId, categories) {
         categories.find { it.categoryId == transaction.categoryId }?.name ?: "Other"
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier.size(48.dp).background(Color(0xFFF1F3F5), RoundedCornerShape(12.dp)),
+            modifier = Modifier
+                .size(48.dp)
+                .background(Color(0xFFF1F3F5), RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            // Icon changes based on category or type
             Icon(
                 imageVector = if (isExpense) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
                 contentDescription = null,
@@ -202,7 +279,6 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String, catego
         Spacer(Modifier.width(16.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            // This will automatically be White in Dark Mode and Black in Light Mode
             Text(
                 text = transaction.title,
                 fontWeight = FontWeight.SemiBold,
@@ -210,19 +286,18 @@ fun TransactionListItem(transaction: Transaction, currencySymbol: String, catego
             )
 
             Text(
-                text = CategoryName,
+                text = categoryName,
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
 
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(4.dp))
+
             Text(
                 text = "${if (isExpense) "-" else "+"} $currencySymbol ${String.format("%.2f", transaction.amount)}",
                 fontWeight = FontWeight.Bold,
-                // Use your PrimaryGreen for income and a bright Red for expenses
                 color = if (isExpense) Color(0xFFCF6679) else MaterialTheme.colorScheme.primary
             )
         }
     }
 }
-
