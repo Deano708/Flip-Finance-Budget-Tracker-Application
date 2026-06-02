@@ -32,7 +32,10 @@ Title: Disclosure of AI Usage in my Assessment.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    onNavigateToTerms: () -> Unit = {},
+    onNavigateToPrivacy: () -> Unit = {},
+    onNavigateToHelp: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -127,9 +130,9 @@ fun SettingsScreen(
 
             // GROUP 4: About & Links
             SettingsGroupCard(title = "About") {
-                SettingsTextButton("Terms of Service") { /* Navigate */ }
-                SettingsTextButton("Privacy Policy") { /* Navigate */ }
-                SettingsTextButton("Help & Support") { /* Navigate */ }
+                SettingsTextButton("Terms of Service") { onNavigateToTerms() }
+                SettingsTextButton("Privacy Policy") { onNavigateToPrivacy() }
+                SettingsTextButton("Help & Support") { onNavigateToHelp() }
 
                 Text(
                     text = "FlipFinance Version 1.0.0",
