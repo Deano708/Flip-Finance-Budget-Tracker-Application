@@ -30,5 +30,6 @@ sealed class Screen(val route: String, val title: String? = null, val icon: Imag
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
     object ChangeCredentials : Screen("change_credentials", "Change Credentials")
 
+    object CategoryBreakdown : Screen("category_breakdown_screen")
     object AddTransaction : Screen("add_transaction")
 }

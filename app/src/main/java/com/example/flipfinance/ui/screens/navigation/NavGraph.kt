@@ -25,6 +25,7 @@ import com.example.flipfinance.ViewModel.SettingsViewModel
 import com.example.flipfinance.ViewModel.TransactionViewModel
 import com.example.flipfinance.ui.screens.Achievements.AchievementsScreen
 import com.example.flipfinance.ui.screens.Achievements.InputStreakDetailScreen
+import com.example.flipfinance.ui.screens.Home.CategoryBreakdownScreen
 import com.example.flipfinance.ui.screens.Profile.ChangeCredentialsScreen
 import com.example.flipfinance.ui.screens.Settings.SettingsScreen
 import com.example.flipfinance.ui.screens.Transaction.AddTransactionScreen
@@ -100,8 +101,17 @@ fun NavGraph(
                     navController.navigate(Screen.AddTransaction.route)
                 },
                 onNavigateToAnalytics = {
-                    navController.navigate(Screen.Transactions.route)
+                    navController.navigate(Screen.CategoryBreakdown.route)
                 }
+            )
+        }
+
+        // Category graphs
+        composable(Screen.CategoryBreakdown.route) {
+            val transactionViewModel: TransactionViewModel = hiltViewModel()
+            CategoryBreakdownScreen(
+                viewModel = transactionViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
