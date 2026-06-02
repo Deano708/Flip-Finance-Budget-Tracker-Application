@@ -84,7 +84,7 @@ import java.util.UUID
 
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
-    private val firebaseSource: FirebaseTransactionSource, // Swapped to Firebase transaction source from RoomDB for transaction storage
+    private val firebaseSource: FirebaseTransactionSource,
     private val categoryDao: CategoryDao,
     private val fbDatabase: FirebaseDatabase,
     private val dao: TransactionDao,
@@ -98,11 +98,11 @@ class TransactionViewModel @Inject constructor(
     val searchQuery = MutableStateFlow("")
     val selectedFilter = MutableStateFlow("All")
 
-    // Reactive Categories Pipeline (Kept completely locally sourced from Room DB as requested)
+    // Reactive Categories Pipeline
     val categories: StateFlow<List<Category>> = categoryDao.getCategoriesByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Reactive Transactions Pipeline directly from Firebase
+    // Reactive Transactions Pipeline
     val transactions: StateFlow<List<Transaction>> = firebaseSource.getTransactionsByUser(currentUserId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -118,7 +118,6 @@ class TransactionViewModel @Inject constructor(
         selectedDateRange
     ) { txList, catList, query, filter, dateRange ->
         txList.filter { transaction ->
-            // Resolve custom category string display name via reference key lookup
             val resolvedCategoryName = catList.find { it.categoryId == transaction.categoryId }?.name ?: ""
 
             val matchesFilter = when {
@@ -314,7 +313,7 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
-    // Delete method to ensure delete functionality by entity
+    // Delete method
     fun deleteTransactionByEntity(transaction: Transaction) {
         viewModelScope.launch(Dispatchers.IO) {
             val realFirebaseKey = findFirebaseKeyByHash(transaction.transactionId)

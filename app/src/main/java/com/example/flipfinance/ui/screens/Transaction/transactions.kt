@@ -306,7 +306,7 @@ fun TransactionScreen(
                     categories = categoryList,
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        // Passes the transaction object into the method (fixing delete issues)
+                        // Passes the transaction object into the method
                         viewModel.deleteTransactionByEntity(selectedTransaction!!)
                         showSheet = false
                     },

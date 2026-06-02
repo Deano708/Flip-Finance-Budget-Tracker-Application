@@ -53,7 +53,7 @@ fun HomeScreen(
     val currentIncome = financeSummary.first
     val currentExpenses = remember(transactions) {
         transactions
-            .filter { it.expenseType == "Expense" } // Matches your TransactionListItem logic
+            .filter { it.expenseType == "Expense" }
             .sumOf { it.amount }
     }
 
