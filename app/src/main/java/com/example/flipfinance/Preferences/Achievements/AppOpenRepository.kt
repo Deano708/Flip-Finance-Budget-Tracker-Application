@@ -16,17 +16,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /*
-   Title: DataStore
-   Author: Android Developers
-   Date: 2024
-   Date accessed: 31/05/2026
-   Availability: https://developer.android.com/topic/libraries/architecture/datastore
-
-   Title: Dependency injection with Hilt
-   Author: Android Developers
-   Date: 22 April 2026
-   Date accessed: 24/04/2026
-   Availability: https://developer.android.com/training/dependency-injection/hilt-android
+Title: Disclosure of AI Usage in my Assessment.
+• Section: AppOpenRepository.
+• AI Tool: Claude Sonnet 4.6
+• Purpose/intention : Design and syntax implementation of AppOpenRepository, allowing for tracking of when app is used allowing for streaks tracking.
+• Date(s) 02/06/2026.
+• https://claude.ai/share/943aa681-7632-451c-84c2-b814e218caae
 */
 
 // Separate DataStore instance from settings to keep concerns isolated

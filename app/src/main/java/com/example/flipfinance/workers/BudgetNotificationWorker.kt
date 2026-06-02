@@ -20,17 +20,12 @@ import kotlinx.coroutines.flow.firstOrNull
 import java.util.Calendar
 
 /*
-   Title: Schedule tasks with WorkManager
-   Author: Android Developers
-   Date: 2024
-   Date accessed: 01/06/2026
-   Availability: https://developer.android.com/topic/libraries/architecture/workmanager
-
-   Title: Send a simple notification
-   Author: Android Developers
-   Date: 2024
-   Date accessed: 01/06/2026
-   Availability: https://developer.android.com/develop/ui/views/notifications/build-notification
+Title: Disclosure of AI Usage in my Assessment.
+• Section: BudgetNotificationWorker.
+• AI Tool: Claude Sonnet 4.6
+• Purpose/intention : Design and syntax implementation of BudgetNotification worker.
+• Date(s) 01/06/2026.
+• https://claude.ai/share/943aa681-7632-451c-84c2-b814e218caae
 */
 
 // Channel IDs — one channel per notification type

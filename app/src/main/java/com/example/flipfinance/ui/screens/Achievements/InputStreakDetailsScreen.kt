@@ -27,17 +27,12 @@ import com.example.flipfinance.ViewModel.AchievementsViewModel
 import com.example.flipfinance.ViewModel.WeeklyActivity
 
 /*
-   Title: Layouts in Jetpack Compose
-   Author: Android Developers Documentation
-   Date: 2024
-   Date accessed: 31/05/2026
-   Availability: https://developer.android.com/develop/ui/compose/layouts
-
-   Title: Material Design 3 - Cards
-   Author: Google
-   Date: 2024
-   Date accessed: 31/05/2026
-   Availability: https://m3.material.io/components/cards/overview
+Title: Disclosure of AI Usage in my Assessment.
+• Section: InputStreakDetailsScreen.
+• AI Tool: Claude Sonnet 4.6
+• Purpose/intention : Design and syntax implementation of streaks details screen.
+• Date(s) 02/06/2026.
+• https://claude.ai/share/943aa681-7632-451c-84c2-b814e218caae
 */
 
 @OptIn(ExperimentalMaterial3Api::class)

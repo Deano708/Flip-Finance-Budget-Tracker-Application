@@ -5,11 +5,12 @@ import androidx.work.*
 import java.util.concurrent.TimeUnit
 
 /*
-   Title: Schedule tasks with WorkManager
-   Author: Android Developers
-   Date: 2024
-   Date accessed: 01/06/2026
-   Availability: https://developer.android.com/topic/libraries/architecture/workmanager
+Title: Disclosure of AI Usage in my Assessment.
+• Section: NotificationScheduler.
+• AI Tool: Claude Sonnet 4.6
+• Purpose/intention : Design and syntax implementation of Notification scheduler, allowing for a toggle of notification, an immediate notification once an expense has been made and a 6 hourly trigger if over budget.
+• Date(s) 01/06/2026.
+• https://claude.ai/share/943aa681-7632-451c-84c2-b814e218caae
 */
 
 object NotificationScheduler {

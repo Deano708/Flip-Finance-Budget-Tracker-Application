@@ -21,10 +21,12 @@ import javax.inject.Inject
 import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.dao.CategoryDao
 import com.example.flipfinance.data.local.util.FirebaseTransactionSource
+import com.example.flipfinance.workers.NotificationScheduler
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+
 // For Home
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
@@ -304,6 +306,7 @@ class TransactionViewModel @Inject constructor(
                 val firebaseRef = fbDatabase.getReference("transactions/$currentUserId")
                 firebaseRef.child(targetTxId).setValue(finalizedTransaction).await()
                 Log.d("FirebaseSuccess", "Transaction successfully written/updated at node path: $targetTxId")
+                NotificationScheduler.runImmediateCheck(context)
             } catch (dbEx: Exception) {
                 Log.e("DatabaseError", "Firebase execution failure writing transaction: ${dbEx.message}")
                 throw dbEx
