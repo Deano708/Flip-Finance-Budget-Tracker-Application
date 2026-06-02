@@ -1,0 +1,50 @@
+package com.example.flipfinance.workers
+
+import android.content.Context
+import androidx.work.*
+import java.util.concurrent.TimeUnit
+
+/*
+   Title: Schedule tasks with WorkManager
+   Author: Android Developers
+   Date: 2024
+   Date accessed: 01/06/2026
+   Availability: https://developer.android.com/topic/libraries/architecture/workmanager
+*/
+
+object NotificationScheduler {
+
+    private const val WORK_NAME = "budget_notification_check"
+
+    // Call this once from MainActivity after the user is logged in.
+    // WorkManager deduplicates by WORK_NAME so calling it multiple times is safe —
+    // it will only schedule one recurring job.
+    fun schedule(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED) // Needs Firebase access
+            .build()
+
+        // Runs every 6 hours — frequent enough to catch over-budget events soon
+        // after a transaction is added, without draining the battery.
+        val workRequest = PeriodicWorkRequestBuilder<BudgetNotificationWorker>(
+            repeatInterval = 6,
+            repeatIntervalTimeUnit = TimeUnit.HOURS
+        )
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            WORK_NAME,
+            // KEEP means: if a job with this name already exists, don't replace it.
+            // This prevents re-scheduling on every app open while still ensuring
+            // the job exists on first launch.
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+
+    // Call this from SettingsViewModel when budget alerts are toggled OFF
+    fun cancel(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+    }
+}
