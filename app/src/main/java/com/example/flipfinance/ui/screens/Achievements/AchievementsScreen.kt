@@ -3,6 +3,7 @@ package com.example.flipfinance.ui.screens.Achievements
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -13,13 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,17 +27,11 @@ import com.example.flipfinance.ViewModel.AchievementsViewModel
 import com.example.flipfinance.domain.model.Badge
 
 /*
-   Title: Material Design 3 - Cards
+   Title: Material Design 3 - Cards & Dialogs
    Author: Google
    Date: 2024
-   Date accessed: 31/05/2026
-   Availability: https://m3.material.io/components/cards/overview
-
-   Title: Layouts in Jetpack Compose
-   Author: Android Developers Documentation
-   Date: 2024
-   Date accessed: 31/05/2026
-   Availability: https://developer.android.com/develop/ui/compose/layouts
+   Date accessed: 02/06/2026
+   Availability: https://m3.material.io/components/dialogs/overview
 */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,19 +72,19 @@ fun AchievementsScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // ── CARD 1: Input Streak (Teammate's Code Maintained) ─────────────────
+            // ── CARD 1: Input Streak ──────────────────────────────────────────────
             InputStreakCard(
                 streakWeeks = state.inputStreakWeeks,
                 weeklyDays = state.weeklyTransactionDays,
                 onCardClick = onNavigateToStreakDetail
             )
 
-            // ── CARD 2: App Open Streak (Teammate's Code Maintained) ──────────────
+            // ── CARD 2: App Open Streak ───────────────────────────────────────────
             AppOpenStreakCard(
                 streakWeeks = state.appOpenStreakWeeks
             )
 
-            // ── CARD 3: Badges (Your Live Connected Work) ──────────────────────────
+            // ── CARD 3: Badges ────────────────────────────────────────────────────
             BadgesCard(
                 badges = state.badges
             )
@@ -111,7 +103,6 @@ private fun InputStreakCard(
     onCardClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
-
     val streakMilestone = 12
     val progress = (streakWeeks.toFloat() / streakMilestone).coerceIn(0f, 1f)
 
@@ -126,7 +117,6 @@ private fun InputStreakCard(
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(44.dp),
@@ -275,7 +265,6 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(44.dp),
@@ -371,11 +360,12 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
     }
 }
 
-// ── Card 3: Badges (Refactored to show your dynamic data) ─────────────────────
+// ── Card 3: Badges ────────────────────────────────────────────────────────────
 
 @Composable
 private fun BadgesCard(badges: List<Badge>) {
     val colorScheme = MaterialTheme.colorScheme
+    var selectedBadge by remember { mutableStateOf<Badge?>(null) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -385,7 +375,6 @@ private fun BadgesCard(badges: List<Badge>) {
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(44.dp),
@@ -408,56 +397,140 @@ private fun BadgesCard(badges: List<Badge>) {
                         color = colorScheme.onSurface
                     )
                     Text(
-                        text = "Earned through unique achievements",
+                        text = "Tap any badge to see achievement rules",
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Horizontally scrollable live badge row
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp)
+            ) {
                 items(badges) { badge ->
-                    BadgeItem(badge = badge)
+                    BadgeItem(
+                        badge = badge,
+                        onBadgeClick = { selectedBadge = badge }
+                    )
                 }
             }
         }
     }
+
+    // Modal Details Box displays when clicked
+    selectedBadge?.let { badge ->
+        AlertDialog(
+            onDismissRequest = { selectedBadge = null },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            color = if (badge.isUnlocked) colorScheme.tertiary.copy(alpha = 0.15f)
+                            else colorScheme.onSurface.copy(alpha = 0.08f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = badge.icon,
+                        contentDescription = null,
+                        tint = if (badge.isUnlocked) colorScheme.tertiary
+                        else colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = badge.title,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = badge.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (badge.isUnlocked) colorScheme.primary.copy(alpha = 0.08f)
+                        else colorScheme.error.copy(alpha = 0.08f)
+                    ) {
+                        Text(
+                            text = if (badge.isUnlocked) "Status: Unlocked" else "Status: Locked",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (badge.isUnlocked) colorScheme.primary else colorScheme.error,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                    badge.dateAchieved?.let { date ->
+                        if (badge.isUnlocked) {
+                            Text(
+                                text = "Earned: $date",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedBadge = null }) {
+                    Text("Close", fontWeight = FontWeight.Bold)
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = colorScheme.surface
+        )
+    }
 }
 
 @Composable
-private fun BadgeItem(badge: Badge) {
+private fun BadgeItem(
+    badge: Badge,
+    onBadgeClick: () -> Unit
+) {
     val colorScheme = MaterialTheme.colorScheme
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(68.dp)
+        modifier = Modifier
+            .width(72.dp)
+            .clickable { onBadgeClick() }
     ) {
+       //Renders Material Vectors smoothly instead of falling back to broken fonts
         Box(
             modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
+                .size(58.dp)
                 .background(
-                    if (badge.isUnlocked)
-                        colorScheme.tertiary.copy(alpha = 0.15f)
-                    else
-                        colorScheme.onSurface.copy(alpha = 0.06f)
+                    if (badge.isUnlocked) colorScheme.tertiary.copy(alpha = 0.15f)
+                    else colorScheme.onSurface.copy(alpha = 0.06f),
+                    shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
         ) {
-            // Renders your custom design emoji text natively
-            Text(
-                text = badge.emoji,
-                fontSize = 24.sp,
-                style = LocalTextStyle.current.copy(
-                    color = if (badge.isUnlocked) Color.Unspecified
-                    else Color.Gray.copy(alpha = 0.35f)
-                )
+            Icon(
+                imageVector = badge.icon,
+                contentDescription = badge.title,
+                tint = if (badge.isUnlocked) colorScheme.tertiary
+                else colorScheme.onSurface.copy(alpha = 0.3f),
+                modifier = Modifier.size(28.dp)
             )
-
-            // Subtle mini lock badge overlaid if the badge remains locked
             if (!badge.isUnlocked) {
                 Box(
                     modifier = Modifier
@@ -472,21 +545,24 @@ private fun BadgeItem(badge: Badge) {
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Locked",
-                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                        modifier = Modifier.size(10.dp)
+                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.size(11.dp)
                     )
                 }
             }
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = badge.title,
             style = MaterialTheme.typography.labelSmall,
-            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp,
             textAlign = TextAlign.Center,
             color = if (badge.isUnlocked) colorScheme.onSurface
-            else colorScheme.onSurface.copy(alpha = 0.35f),
-            maxLines = 2
+            else colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            minLines = 2,
+            lineHeight = 13.sp
         )
     }
 }

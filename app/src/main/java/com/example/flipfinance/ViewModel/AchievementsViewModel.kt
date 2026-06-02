@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flipfinance.Preferences.Achievements.AppOpenRepository
 import com.example.flipfinance.data.local.util.FirebaseTransactionSource
-import com.example.flipfinance.domain.model.Badge  // Using YOUR clean domain model
-import com.example.flipfinance.domain.repository.BadgeRepository // Injected your repo interface
+import com.example.flipfinance.domain.model.Badge
+import com.example.flipfinance.domain.repository.BadgeRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +20,7 @@ data class AchievementsUiState(
     val appOpenStreakWeeks: Int = 0,
     val weeklyTransactionDays: Map<String, Boolean> = emptyMap(),
     val allWeeklyActivity: List<WeeklyActivity> = emptyList(),
-    val badges: List<Badge> = emptyList() // Now holds your live badges!
+    val badges: List<Badge> = emptyList()
 )
 
 data class WeeklyActivity(
@@ -41,7 +41,7 @@ class AchievementsViewModel @Inject constructor(
     val uiState: StateFlow<AchievementsUiState> = combine(
         firebaseSource.getTransactionsByUser(currentUserId),
         appOpenRepository.appOpenStreakWeeks,
-        badgeRepository.getBadges(currentUserId) //Live badge stream
+        badgeRepository.getBadges(currentUserId)
     ) { transactions, appOpenStreakWeeks, liveBadges ->
 
         // ── Group all transactions by ISO week bucket (year-week) ─────────────
@@ -85,7 +85,6 @@ class AchievementsViewModel @Inject constructor(
         val orderedDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         val weeklyTransactionDays = orderedDays.associateWith { it in currentWeekDays }
 
-        // 4. Return the unified UI State containing your live processed badges
         AchievementsUiState(
             inputStreakWeeks = inputStreakWeeks,
             appOpenStreakWeeks = appOpenStreakWeeks,
