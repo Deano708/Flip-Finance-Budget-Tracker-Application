@@ -3,7 +3,6 @@ package com.example.flipfinance.ui.screens.Achievements
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -18,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.flipfinance.ViewModel.AchievementsViewModel
 import com.example.flipfinance.domain.model.Badge
+import com.example.flipfinance.domain.model.LeaderboardUser
 
 /*
    Title: Material Design 3 - Cards & Dialogs
@@ -87,6 +88,13 @@ fun AchievementsScreen(
             // ── CARD 3: Badges ────────────────────────────────────────────────────
             BadgesCard(
                 badges = state.badges
+            )
+
+            // ── CARD 4: Leaderboard Snapshot ──────────────────────────────────────
+            LeaderboardCard(
+                currentRank = state.currentRank,
+                totalUsers = state.totalParticipants,
+                fullList = state.fullLeaderboard
             )
 
             Spacer(modifier = Modifier.height(100.dp))
@@ -513,7 +521,6 @@ private fun BadgeItem(
             .width(72.dp)
             .clickable { onBadgeClick() }
     ) {
-       //Renders Material Vectors smoothly instead of falling back to broken fonts
         Box(
             modifier = Modifier
                 .size(58.dp)
@@ -563,6 +570,167 @@ private fun BadgeItem(
             maxLines = 2,
             minLines = 2,
             lineHeight = 13.sp
+        )
+    }
+}
+
+// ── Card 4: Leaderboard Snapshot Card ─────────────────────────────────────────
+
+@Composable
+private fun LeaderboardCard(
+    currentRank: Int,
+    totalUsers: Int,
+    fullList: List<LeaderboardUser>
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    var showFullLeaderboard by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { showFullLeaderboard = true },
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = colorScheme.primary.copy(alpha = 0.1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Leaderboard,
+                        contentDescription = null,
+                        modifier = Modifier.padding(10.dp),
+                        tint = colorScheme.primary
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Team Leaderboard",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Ranked by consistency streaks",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Expand",
+                    tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Your Position:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "Rank #$currentRank",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = colorScheme.primary
+                )
+                Text(
+                    text = " / $totalUsers",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Tap to view full team standings →",
+                style = MaterialTheme.typography.labelSmall,
+                color = colorScheme.primary.copy(alpha = 0.7f)
+            )
+        }
+    }
+
+    if (showFullLeaderboard) {
+        AlertDialog(
+            onDismissRequest = { showFullLeaderboard = false },
+            title = {
+                Text(
+                    text = "Current Standings",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 350.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    fullList.forEachIndexed { index, user ->
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (index == currentRank - 1) colorScheme.primary.copy(alpha = 0.08f)
+                            else colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = when (index) {
+                                        0 -> "🥇"
+                                        1 -> "🥈"
+                                        2 -> "🥉"
+                                        else -> "#${index + 1}"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.width(36.dp)
+                                )
+                                Text(
+                                    text = user.displayName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (index == currentRank - 1) FontWeight.Bold else FontWeight.Medium,
+                                    color = colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "${user.streakWeeks} 🔥",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFullLeaderboard = false }) {
+                    Text("Close", fontWeight = FontWeight.Bold)
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = colorScheme.surface
         )
     }
 }

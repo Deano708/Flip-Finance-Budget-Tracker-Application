@@ -5,11 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.example.flipfinance.Preferences.Achievements.AppOpenRepository
 import com.example.flipfinance.data.local.util.FirebaseTransactionSource
 import com.example.flipfinance.domain.model.Badge
+import com.example.flipfinance.domain.model.LeaderboardUser
 import com.example.flipfinance.domain.repository.BadgeRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.util.Calendar
@@ -20,7 +27,10 @@ data class AchievementsUiState(
     val appOpenStreakWeeks: Int = 0,
     val weeklyTransactionDays: Map<String, Boolean> = emptyMap(),
     val allWeeklyActivity: List<WeeklyActivity> = emptyList(),
-    val badges: List<Badge> = emptyList()
+    val badges: List<Badge> = emptyList(),
+    val currentRank: Int = 0,
+    val totalParticipants: Int = 0,
+    val fullLeaderboard: List<LeaderboardUser> = emptyList()
 )
 
 data class WeeklyActivity(
@@ -33,16 +43,32 @@ data class WeeklyActivity(
 class AchievementsViewModel @Inject constructor(
     private val firebaseSource: FirebaseTransactionSource,
     private val appOpenRepository: AppOpenRepository,
-    private val badgeRepository: BadgeRepository
+    private val badgeRepository: BadgeRepository,
+    private val firebaseDatabase: FirebaseDatabase
 ) : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
+    // Real time flow streaming the global leaderboard entries from Firebase
+    private val leaderboardFlow = callbackFlow {
+        val ref = firebaseDatabase.reference.child("leaderboard")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = snapshot.children.mapNotNull { it.getValue(LeaderboardUser::class.java) }
+                trySend(list.sortedByDescending { it.streakWeeks })
+            }
+            override fun onCancelled(error: DatabaseError) { close(error.toException()) }
+        }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
     val uiState: StateFlow<AchievementsUiState> = combine(
         firebaseSource.getTransactionsByUser(currentUserId),
         appOpenRepository.appOpenStreakWeeks,
-        badgeRepository.getBadges(currentUserId)
-    ) { transactions, appOpenStreakWeeks, liveBadges ->
+        badgeRepository.getBadges(currentUserId),
+        leaderboardFlow
+    ) { transactions, appOpenStreakWeeks, liveBadges, rankedUsers ->
 
         // ── Group all transactions by ISO week bucket (year-week) ─────────────
         val weekBuckets = mutableMapOf<String, MutableSet<String>>()
@@ -84,13 +110,18 @@ class AchievementsViewModel @Inject constructor(
         val currentWeekDays = allWeeklyActivity.firstOrNull()?.daysWithTransactions ?: emptySet()
         val orderedDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         val weeklyTransactionDays = orderedDays.associateWith { it in currentWeekDays }
+        val userIndex = rankedUsers.indexOfFirst { it.uid == currentUserId }
+        val calculatedRank = if (userIndex != -1) userIndex + 1 else rankedUsers.size + 1
 
         AchievementsUiState(
             inputStreakWeeks = inputStreakWeeks,
             appOpenStreakWeeks = appOpenStreakWeeks,
             weeklyTransactionDays = weeklyTransactionDays,
             allWeeklyActivity = allWeeklyActivity,
-            badges = liveBadges
+            badges = liveBadges,
+            currentRank = calculatedRank,
+            totalParticipants = rankedUsers.size,
+            fullLeaderboard = rankedUsers
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AchievementsUiState())
 
