@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -18,6 +19,14 @@ import javax.inject.Inject
    Date accessed: 01/06/2026
    Code version: 1
    Availability: https://youtu.be/s3m1PSd7VWc?si=W9D10o-CFGRSg9Ex
+*/
+/*
+Title: Disclosure of AI Usage in my Assessment.
+• Section: BadgeViewModel.
+• AI Tool: Gemini
+• Purpose/intention :Syntax implementation in the viewmodel
+• Date(s) 02/06/2026.
+• https://gemini.google.com/share/b4ac44f6b10b
 */
 
 @HiltViewModel
@@ -32,11 +41,8 @@ class BadgeViewModel @Inject constructor(
     val badges: StateFlow<List<Badge>> = repository.getBadges(uid)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val unlockedCount: StateFlow<Int> = repository.getBadges(uid)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-        .let { flow ->
-            kotlinx.coroutines.flow.combine(flow, flow) { badges, _ ->
-                badges.count { it.isUnlocked }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-        }
+    // Map directly from the badges state flow to count unlocked items
+    val unlockedCount: StateFlow<Int> = badges
+        .map { list -> list.count { it.isUnlocked } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 }
