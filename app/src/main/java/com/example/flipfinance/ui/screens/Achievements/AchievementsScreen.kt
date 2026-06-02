@@ -1,6 +1,5 @@
 package com.example.flipfinance.ui.screens.Achievements
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,21 +13,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.flipfinance.ViewModel.AchievementsViewModel
-import com.example.flipfinance.ViewModel.Badge
+import com.example.flipfinance.domain.model.Badge
+import com.example.flipfinance.domain.model.LeaderboardUser
 
 /*
 Title: Disclosure of AI Usage in my Assessment.
@@ -37,6 +34,13 @@ Title: Disclosure of AI Usage in my Assessment.
 • Purpose/intention : Design and syntax implementation of Achievements screen, allowing for navigation to input streak details.
 • Date(s) 02/06/2026.
 • https://claude.ai/share/943aa681-7632-451c-84c2-b814e218caae
+*/
+/*
+   Title: Material Design 3 - Cards & Dialogs
+   Author: Google
+   Date: 2024
+   Date accessed: 02/06/2026
+   Availability: https://m3.material.io/components/dialogs/overview
 */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,6 +96,13 @@ fun AchievementsScreen(
             // ── CARD 3: Badges ────────────────────────────────────────────────────
             BadgesCard(
                 badges = state.badges
+            )
+
+            // ── CARD 4: Leaderboard Snapshot ──────────────────────────────────────
+            LeaderboardCard(
+                currentRank = state.currentRank,
+                totalUsers = state.totalParticipants,
+                fullList = state.fullLeaderboard
             )
 
             Spacer(modifier = Modifier.height(100.dp))
@@ -383,6 +394,7 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
 @Composable
 private fun BadgesCard(badges: List<Badge>) {
     val colorScheme = MaterialTheme.colorScheme
+    var selectedBadge by remember { mutableStateOf<Badge?>(null) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -392,8 +404,6 @@ private fun BadgesCard(badges: List<Badge>) {
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-
-            // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(44.dp),
@@ -416,84 +426,140 @@ private fun BadgesCard(badges: List<Badge>) {
                         color = colorScheme.onSurface
                     )
                     Text(
-                        text = "Earned through unique achievements",
+                        text = "Tap any badge to see achievement rules",
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Coming Soon banner
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = colorScheme.tertiaryContainer.copy(alpha = 0.35f),
-                modifier = Modifier.fillMaxWidth()
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Construction,
-                        contentDescription = null,
-                        tint = colorScheme.tertiary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Coming soon — badges are being built",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colorScheme.onTertiaryContainer,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Badge grid — all locked/greyed out as placeholders
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(badges) { badge ->
-                    BadgeItem(badge = badge)
+                    BadgeItem(
+                        badge = badge,
+                        onBadgeClick = { selectedBadge = badge }
+                    )
                 }
             }
         }
     }
+
+    // Modal Details Box displays when clicked
+    selectedBadge?.let { badge ->
+        AlertDialog(
+            onDismissRequest = { selectedBadge = null },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            color = if (badge.isUnlocked) colorScheme.tertiary.copy(alpha = 0.15f)
+                            else colorScheme.onSurface.copy(alpha = 0.08f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = badge.icon,
+                        contentDescription = null,
+                        tint = if (badge.isUnlocked) colorScheme.tertiary
+                        else colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = badge.title,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = badge.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (badge.isUnlocked) colorScheme.primary.copy(alpha = 0.08f)
+                        else colorScheme.error.copy(alpha = 0.08f)
+                    ) {
+                        Text(
+                            text = if (badge.isUnlocked) "Status: Unlocked" else "Status: Locked",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (badge.isUnlocked) colorScheme.primary else colorScheme.error,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                    badge.dateAchieved?.let { date ->
+                        if (badge.isUnlocked) {
+                            Text(
+                                text = "Earned: $date",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedBadge = null }) {
+                    Text("Close", fontWeight = FontWeight.Bold)
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = colorScheme.surface
+        )
+    }
 }
 
 @Composable
-private fun BadgeItem(badge: Badge) {
+private fun BadgeItem(
+    badge: Badge,
+    onBadgeClick: () -> Unit
+) {
     val colorScheme = MaterialTheme.colorScheme
-    val icon = getBadgeIcon(badge.iconName)
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(68.dp)
+        modifier = Modifier
+            .width(72.dp)
+            .clickable { onBadgeClick() }
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
+                .size(58.dp)
                 .background(
-                    if (badge.isEarned)
-                        colorScheme.tertiary.copy(alpha = 0.15f)
-                    else
-                        colorScheme.onSurface.copy(alpha = 0.06f)
+                    if (badge.isUnlocked) colorScheme.tertiary.copy(alpha = 0.15f)
+                    else colorScheme.onSurface.copy(alpha = 0.06f),
+                    shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                imageVector = badge.icon,
                 contentDescription = badge.title,
-                tint = if (badge.isEarned) colorScheme.tertiary
-                else colorScheme.onSurface.copy(alpha = 0.25f),
-                modifier = Modifier.size(26.dp)
+                tint = if (badge.isUnlocked) colorScheme.tertiary
+                else colorScheme.onSurface.copy(alpha = 0.3f),
+                modifier = Modifier.size(28.dp)
             )
-            // Lock overlay for unearned badges
-            if (!badge.isEarned) {
+            if (!badge.isUnlocked) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -506,37 +572,186 @@ private fun BadgeItem(badge: Badge) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                        modifier = Modifier.size(10.dp)
+                        contentDescription = "Locked",
+                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.size(11.dp)
                     )
                 }
             }
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = badge.title,
             style = MaterialTheme.typography.labelSmall,
-            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp,
             textAlign = TextAlign.Center,
-            color = if (badge.isEarned) colorScheme.onSurface
-            else colorScheme.onSurface.copy(alpha = 0.35f),
-            maxLines = 2
+            color = if (badge.isUnlocked) colorScheme.onSurface
+            else colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            minLines = 2,
+            lineHeight = 13.sp
         )
     }
 }
 
-// ── Icon resolver for badges ──────────────────────────────────────────────────
-private fun getBadgeIcon(iconName: String): ImageVector {
-    return when (iconName) {
-        "Payments"             -> Icons.Default.Payments
-        "TrendingUp"           -> Icons.Default.TrendingUp
-        "Star"                 -> Icons.Default.Star
-        "LocalFireDepartment"  -> Icons.Default.LocalFireDepartment
-        "Savings"              -> Icons.Default.Savings
-        "AttachMoney"          -> Icons.Default.AttachMoney
-        "Category"             -> Icons.Default.Category
-        "Receipt"              -> Icons.Default.Receipt
-        else                   -> Icons.Default.EmojiEvents
+// ── Card 4: Leaderboard Snapshot Card ─────────────────────────────────────────
+
+@Composable
+private fun LeaderboardCard(
+    currentRank: Int,
+    totalUsers: Int,
+    fullList: List<LeaderboardUser>
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    var showFullLeaderboard by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { showFullLeaderboard = true },
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.2f)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = colorScheme.primary.copy(alpha = 0.1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Leaderboard,
+                        contentDescription = null,
+                        modifier = Modifier.padding(10.dp),
+                        tint = colorScheme.primary
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Team Leaderboard",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Ranked by consistency streaks",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "Expand",
+                    tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Your Position:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "Rank #$currentRank",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = colorScheme.primary
+                )
+                Text(
+                    text = " / $totalUsers",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Tap to view full team standings →",
+                style = MaterialTheme.typography.labelSmall,
+                color = colorScheme.primary.copy(alpha = 0.7f)
+            )
+        }
+    }
+
+    if (showFullLeaderboard) {
+        AlertDialog(
+            onDismissRequest = { showFullLeaderboard = false },
+            title = {
+                Text(
+                    text = "Current Standings",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 350.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    fullList.forEachIndexed { index, user ->
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (index == currentRank - 1) colorScheme.primary.copy(alpha = 0.08f)
+                            else colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = when (index) {
+                                        0 -> "🥇"
+                                        1 -> "🥈"
+                                        2 -> "🥉"
+                                        else -> "#${index + 1}"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.width(36.dp)
+                                )
+                                Text(
+                                    text = user.displayName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (index == currentRank - 1) FontWeight.Bold else FontWeight.Medium,
+                                    color = colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = "${user.streakWeeks} 🔥",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFullLeaderboard = false }) {
+                    Text("Close", fontWeight = FontWeight.Bold)
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = colorScheme.surface
+        )
     }
 }

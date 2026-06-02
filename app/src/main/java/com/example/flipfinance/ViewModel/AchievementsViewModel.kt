@@ -4,90 +4,79 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flipfinance.Preferences.Achievements.AppOpenRepository
 import com.example.flipfinance.data.local.util.FirebaseTransactionSource
+import com.example.flipfinance.domain.model.Badge
+import com.example.flipfinance.domain.model.LeaderboardUser
+import com.example.flipfinance.domain.repository.BadgeRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.util.Calendar
 import javax.inject.Inject
 
-/*
-   Title: Save data in a local database using Room
-   Author: Android Developers
-   Date: 5 March 2026
-   Date accessed: 24/04/2026
-   Availability: https://developer.android.com/training/data-storage/room
-*/
-
-/*
-   Title: Dependency injection with Hilt
-   Author: Android Developers
-   Date: 22 April 2026
-   Date accessed: 24/04/2026
-   Availability: https://developer.android.com/training/dependency-injection/hilt-android
-*/
-
-// Represents the aggregated achievements state for the UI
 data class AchievementsUiState(
     val inputStreakWeeks: Int = 0,
     val appOpenStreakWeeks: Int = 0,
     val weeklyTransactionDays: Map<String, Boolean> = emptyMap(),
     val allWeeklyActivity: List<WeeklyActivity> = emptyList(),
-    val badges: List<Badge> = emptyList()
+    val badges: List<Badge> = emptyList(),
+    val currentRank: Int = 0,
+    val totalParticipants: Int = 0,
+    val fullLeaderboard: List<LeaderboardUser> = emptyList()
 )
 
-// Represents a single week's transaction day activity for the detail table
 data class WeeklyActivity(
     val weekLabel: String,
     val daysWithTransactions: Set<String>,
     val qualifies: Boolean
 )
 
-// Placeholder badge data class for future implementation
-data class Badge(
-    val id: String,
-    val title: String,
-    val description: String,
-    val iconName: String,
-    val isEarned: Boolean = false
-)
-
 @HiltViewModel
 class AchievementsViewModel @Inject constructor(
     private val firebaseSource: FirebaseTransactionSource,
-    private val appOpenRepository: AppOpenRepository          // Injected — no longer a placeholder
+    private val appOpenRepository: AppOpenRepository,
+    private val badgeRepository: BadgeRepository,
+    private val firebaseDatabase: FirebaseDatabase
 ) : ViewModel() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-    private val badgeCatalogue = listOf(
-        Badge("first_tx",    "First Step",      "Log your very first transaction",           "Payments",            false),
-        Badge("ten_tx",      "Getting Started", "Record 10 transactions in total",           "TrendingUp",          false),
-        Badge("fifty_tx",    "Committed",       "Record 50 transactions in total",           "Star",                false),
-        Badge("week_streak", "Consistent",      "Maintain a 4-week input streak",            "LocalFireDepartment", false),
-        Badge("no_expense",  "Saver",           "Have a week with no expenses logged",       "Savings",             false),
-        Badge("big_income",  "Payday",          "Log an income transaction over R10 000",    "AttachMoney",         false),
-        Badge("multi_cat",   "Diversified",     "Use 5 different categories in one month",  "Category",            false),
-        Badge("receipt",     "Paper Trail",     "Attach a receipt to any transaction",       "Receipt",             false)
-    )
+    // Real time flow streaming the global leaderboard entries from Firebase
+    private val leaderboardFlow = callbackFlow {
+        val ref = firebaseDatabase.reference.child("leaderboard")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = snapshot.children.mapNotNull { it.getValue(LeaderboardUser::class.java) }
+                trySend(list.sortedByDescending { it.streakWeeks })
+            }
+            override fun onCancelled(error: DatabaseError) { close(error.toException()) }
+        }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
 
-    // Combine both flows so the UI reacts to changes in either transactions or app-open data
     val uiState: StateFlow<AchievementsUiState> = combine(
         firebaseSource.getTransactionsByUser(currentUserId),
-        appOpenRepository.appOpenStreakWeeks
-    ) { transactions, appOpenStreakWeeks ->
+        appOpenRepository.appOpenStreakWeeks,
+        badgeRepository.getBadges(currentUserId),
+        leaderboardFlow
+    ) { transactions, appOpenStreakWeeks, liveBadges, rankedUsers ->
 
         // ── Group all transactions by ISO week bucket (year-week) ─────────────
         val weekBuckets = mutableMapOf<String, MutableSet<String>>()
-
         transactions.forEach { tx ->
             val cal = Calendar.getInstance().apply { timeInMillis = tx.date }
             val year = cal.get(Calendar.YEAR)
             val week = cal.get(Calendar.WEEK_OF_YEAR)
             val weekKey = "$year-W${week.toString().padStart(2, '0')}"
-
             val dayLabel = when (cal.get(Calendar.DAY_OF_WEEK)) {
                 Calendar.MONDAY    -> "Mon"
                 Calendar.TUESDAY   -> "Tue"
@@ -113,7 +102,7 @@ class AchievementsViewModel @Inject constructor(
 
         // ── Input streak: consecutive qualifying weeks going backwards ─────────
         var inputStreakWeeks = 0
-        for (week in allWeeklyActivity) {       // already sorted newest-first
+        for (week in allWeeklyActivity) {
             if (week.qualifies) inputStreakWeeks++ else break
         }
 
@@ -121,23 +110,27 @@ class AchievementsViewModel @Inject constructor(
         val currentWeekDays = allWeeklyActivity.firstOrNull()?.daysWithTransactions ?: emptySet()
         val orderedDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         val weeklyTransactionDays = orderedDays.associateWith { it in currentWeekDays }
+        val currentUserScore = rankedUsers.find { it.uid == currentUserId }?.streakWeeks ?: appOpenStreakWeeks
+        val calculatedRank = rankedUsers.count { it.streakWeeks > currentUserScore } + 1
+        val totalUsersCount = if (rankedUsers.any { it.uid == currentUserId }) rankedUsers.size else rankedUsers.size + 1
 
         AchievementsUiState(
             inputStreakWeeks = inputStreakWeeks,
-            appOpenStreakWeeks = appOpenStreakWeeks,     // Now live from DataStore
+            appOpenStreakWeeks = appOpenStreakWeeks,
             weeklyTransactionDays = weeklyTransactionDays,
             allWeeklyActivity = allWeeklyActivity,
-            badges = badgeCatalogue
+            badges = liveBadges,
+            currentRank = calculatedRank,
+            totalParticipants = totalUsersCount,
+            fullLeaderboard = rankedUsers
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AchievementsUiState())
 
-    // Converts "2026-W22" into a human-readable label like "25 May – 31 May"
     private fun buildWeekLabel(weekKey: String): String {
         return try {
             val parts = weekKey.split("-W")
             val year = parts[0].toInt()
             val week = parts[1].toInt()
-
             val cal = Calendar.getInstance().apply {
                 clear()
                 set(Calendar.YEAR, year)
@@ -149,7 +142,6 @@ class AchievementsViewModel @Inject constructor(
             cal.add(Calendar.DAY_OF_WEEK, 6)
             val endDay = cal.get(Calendar.DAY_OF_MONTH)
             val endMonth = cal.getDisplayName(Calendar.MONTH, Calendar.SHORT, java.util.Locale.getDefault()) ?: ""
-
             "$startDay $startMonth – $endDay $endMonth"
         } catch (e: Exception) {
             weekKey
