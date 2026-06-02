@@ -2,8 +2,10 @@ package com.example.flipfinance.core.di
 
 import android.content.Context
 import com.example.flipfinance.data.remote.FirebaseAuthRepository
+import com.example.flipfinance.data.remote.FirebaseBadgeRepository
 import com.example.flipfinance.data.remote.FirebaseProfileRepository
 import com.example.flipfinance.domain.repository.AuthRepository
+import com.example.flipfinance.domain.repository.BadgeRepository
 import com.example.flipfinance.domain.repository.ProfileRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -60,4 +62,12 @@ object AppModule {
         firebaseDatabase: FirebaseDatabase,
         @ApplicationContext context: Context
     ): ProfileRepository = FirebaseProfileRepository(firebaseAuth, firebaseDatabase, context)
+
+    @Provides
+    @Singleton
+    fun provideBadgeRepository(
+        firebaseDatabase: FirebaseDatabase
+    ): BadgeRepository {
+        return FirebaseBadgeRepository(firebaseDatabase)
+    }
 }

@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.ui)
     implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.foundation)
     ksp(libs.androidx.room.compiler)
 
     // Firebase (Using BoM)

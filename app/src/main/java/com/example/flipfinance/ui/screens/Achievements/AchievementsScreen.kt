@@ -1,6 +1,5 @@
 package com.example.flipfinance.ui.screens.Achievements
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,14 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.flipfinance.ViewModel.AchievementsViewModel
-import com.example.flipfinance.ViewModel.Badge
+import com.example.flipfinance.domain.model.Badge
 
 /*
    Title: Material Design 3 - Cards
@@ -82,19 +80,19 @@ fun AchievementsScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // ── CARD 1: Input Streak ──────────────────────────────────────────────
+            // ── CARD 1: Input Streak (Teammate's Code Maintained) ─────────────────
             InputStreakCard(
                 streakWeeks = state.inputStreakWeeks,
                 weeklyDays = state.weeklyTransactionDays,
                 onCardClick = onNavigateToStreakDetail
             )
 
-            // ── CARD 2: App Open Streak ───────────────────────────────────────────
+            // ── CARD 2: App Open Streak (Teammate's Code Maintained) ──────────────
             AppOpenStreakCard(
                 streakWeeks = state.appOpenStreakWeeks
             )
 
-            // ── CARD 3: Badges ────────────────────────────────────────────────────
+            // ── CARD 3: Badges (Your Live Connected Work) ──────────────────────────
             BadgesCard(
                 badges = state.badges
             )
@@ -114,7 +112,6 @@ private fun InputStreakCard(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
-    // Cap progress at a 12-week milestone for the progress bar
     val streakMilestone = 12
     val progress = (streakWeeks.toFloat() / streakMilestone).coerceIn(0f, 1f)
 
@@ -130,7 +127,6 @@ private fun InputStreakCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
 
-            // Header row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(44.dp),
@@ -158,7 +154,6 @@ private fun InputStreakCard(
                         color = colorScheme.onSurfaceVariant
                     )
                 }
-                // Tap indicator
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "View details",
@@ -169,7 +164,6 @@ private fun InputStreakCard(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Week streak count display
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = "$streakWeeks",
@@ -193,7 +187,6 @@ private fun InputStreakCard(
                 )
             }
 
-            // Progress bar
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier
@@ -206,7 +199,6 @@ private fun InputStreakCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Current week day bubbles
             Text(
                 text = "This week",
                 style = MaterialTheme.typography.labelSmall,
@@ -259,7 +251,7 @@ private fun DayBubble(label: String, isActive: Boolean, activeColor: Color) {
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = label.take(1), // Just show "M", "T", etc.
+            text = label.take(1),
             style = MaterialTheme.typography.labelSmall,
             color = if (isActive) activeColor else colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
@@ -284,7 +276,6 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
 
-            // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(44.dp),
@@ -316,7 +307,6 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Streak count
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = "$streakWeeks",
@@ -340,7 +330,6 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
                 )
             }
 
-            // Progress bar
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier
@@ -353,7 +342,6 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Informational note
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = colorScheme.secondaryContainer.copy(alpha = 0.4f),
@@ -383,7 +371,7 @@ private fun AppOpenStreakCard(streakWeeks: Int) {
     }
 }
 
-// ── Card 3: Badges ────────────────────────────────────────────────────────────
+// ── Card 3: Badges (Refactored to show your dynamic data) ─────────────────────
 
 @Composable
 private fun BadgesCard(badges: List<Badge>) {
@@ -398,7 +386,6 @@ private fun BadgesCard(badges: List<Badge>) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
 
-            // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     modifier = Modifier.size(44.dp),
@@ -428,38 +415,9 @@ private fun BadgesCard(badges: List<Badge>) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Coming Soon banner
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = colorScheme.tertiaryContainer.copy(alpha = 0.35f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Construction,
-                        contentDescription = null,
-                        tint = colorScheme.tertiary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Coming soon — badges are being built",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colorScheme.onTertiaryContainer,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Badge grid — all locked/greyed out as placeholders
+            // Horizontally scrollable live badge row
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(badges) { badge ->
                     BadgeItem(badge = badge)
@@ -472,7 +430,6 @@ private fun BadgesCard(badges: List<Badge>) {
 @Composable
 private fun BadgeItem(badge: Badge) {
     val colorScheme = MaterialTheme.colorScheme
-    val icon = getBadgeIcon(badge.iconName)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -483,22 +440,25 @@ private fun BadgeItem(badge: Badge) {
                 .size(56.dp)
                 .clip(CircleShape)
                 .background(
-                    if (badge.isEarned)
+                    if (badge.isUnlocked)
                         colorScheme.tertiary.copy(alpha = 0.15f)
                     else
                         colorScheme.onSurface.copy(alpha = 0.06f)
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = badge.title,
-                tint = if (badge.isEarned) colorScheme.tertiary
-                else colorScheme.onSurface.copy(alpha = 0.25f),
-                modifier = Modifier.size(26.dp)
+            // Renders your custom design emoji text natively
+            Text(
+                text = badge.emoji,
+                fontSize = 24.sp,
+                style = LocalTextStyle.current.copy(
+                    color = if (badge.isUnlocked) Color.Unspecified
+                    else Color.Gray.copy(alpha = 0.35f)
+                )
             )
-            // Lock overlay for unearned badges
-            if (!badge.isEarned) {
+
+            // Subtle mini lock badge overlaid if the badge remains locked
+            if (!badge.isUnlocked) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -511,7 +471,7 @@ private fun BadgeItem(badge: Badge) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = null,
+                        contentDescription = "Locked",
                         tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         modifier = Modifier.size(10.dp)
                     )
@@ -524,24 +484,9 @@ private fun BadgeItem(badge: Badge) {
             style = MaterialTheme.typography.labelSmall,
             fontSize = 10.sp,
             textAlign = TextAlign.Center,
-            color = if (badge.isEarned) colorScheme.onSurface
+            color = if (badge.isUnlocked) colorScheme.onSurface
             else colorScheme.onSurface.copy(alpha = 0.35f),
             maxLines = 2
         )
-    }
-}
-
-// ── Icon resolver for badges ──────────────────────────────────────────────────
-private fun getBadgeIcon(iconName: String): ImageVector {
-    return when (iconName) {
-        "Payments"             -> Icons.Default.Payments
-        "TrendingUp"           -> Icons.Default.TrendingUp
-        "Star"                 -> Icons.Default.Star
-        "LocalFireDepartment"  -> Icons.Default.LocalFireDepartment
-        "Savings"              -> Icons.Default.Savings
-        "AttachMoney"          -> Icons.Default.AttachMoney
-        "Category"             -> Icons.Default.Category
-        "Receipt"              -> Icons.Default.Receipt
-        else                   -> Icons.Default.EmojiEvents
     }
 }
