@@ -31,6 +31,28 @@ import androidx.compose.ui.platform.LocalLocale
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.flipfinance.ViewModel.SettingsViewModel
 
+/*
+   Title: Material Design
+   Author: Google
+   Date accessed: 02/06/2026
+   Availability: https://m3.material.io/
+*/
+
+/*
+   Title: Graphics in Compose
+   Author: Android Developers
+   Date accessed: 02/06/2026
+   Availability: https://developer.android.com/develop/ui/compose/graphics/draw/overview
+*/
+
+/*
+   Title: Advanced State and Side Effects in Jetpack Compose
+   Author: Android Developers
+   Date accessed: 02/06/2026
+   Availability: https://developer.android.com/codelabs/jetpack-compose-advanced-state-side-effects#0
+   And: https://youtu.be/TbxCz5AljQk?si=0ZDY7LOqxq2MHiI6
+*/
+
 @SuppressLint("LocalContextConfigurationRead")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +66,7 @@ fun CategoryBreakdownScreen(
     val categories by viewModel.categories.collectAsState()
     val selectedDateRange by viewModel.selectedDateRange.collectAsState()
 
-    // Collect your dynamic user settings state
+    // Collect dynamic user settings state
     val settingsState by settingsViewModel.uiState.collectAsState()
     val currencySymbol = settingsState.currency.symbol
 
@@ -57,7 +79,7 @@ fun CategoryBreakdownScreen(
         context.resources.configuration.locales[0] ?: Locale.getDefault()
     }
 
-    // 2. Reactive Data Filtering Pipeline based on Selected Tab & Date Filter
+    // 2. Reactive Data Filtering based on Selected Tab & Date Filter
     val filteredBreakdownList = remember(transactions, categories, selectedTab, selectedDateRange) {
         transactions
             .filter { tx ->
@@ -78,7 +100,7 @@ fun CategoryBreakdownScreen(
 
     val totalAmount = remember(filteredBreakdownList) { filteredBreakdownList.sumOf { it.second } }
 
-    // Visual Chart Color Swatches
+    // Visual Chart Colour
     val chartColors = listOf(
         Color(0xFFE53935), // Crimson Red
         Color(0xFF1E88E5), // Blue
@@ -119,7 +141,7 @@ fun CategoryBreakdownScreen(
                 onClearFilter = { viewModel.selectedDateRange.value = null }
             )
 
-            // 3. Segmented Type Tab Selector Control Row Component Container
+            // 3. Segmented Type Tab Selector
             TransactionTypeToggle(
                 selectedTab = selectedTab,
                 onTabSelected = { selectedTab = it }
@@ -142,7 +164,7 @@ fun CategoryBreakdownScreen(
                         .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Render the Canvas Donut Graph
+                    // Canvas Donut Graph
                     item {
                         Box(
                             modifier = Modifier
@@ -168,7 +190,7 @@ fun CategoryBreakdownScreen(
                                 }
                             }
 
-                            // Center Absolute Label Values Display
+                            // Center Label Display
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = if (selectedTab == "Expense") "Total Outlays" else "Total Inflow",
@@ -184,7 +206,7 @@ fun CategoryBreakdownScreen(
                         }
                     }
 
-                    // Display the Dynamic Legend Row List Items
+                    // Display List Items
                     itemsIndexed(filteredBreakdownList) { index, (categoryName, amount) ->
                         val percentage = if (totalAmount > 0) (amount / totalAmount) else 0.0
                         val color = chartColors.getOrElse(index) { Color.Gray }
