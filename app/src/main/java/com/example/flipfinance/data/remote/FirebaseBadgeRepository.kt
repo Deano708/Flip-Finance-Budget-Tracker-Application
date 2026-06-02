@@ -23,7 +23,14 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import java.util.Calendar
 import javax.inject.Inject
-
+/*
+Title: Disclosure of AI Usage in my Assessment.
+- Section: FirebaseBadgeRepository.
+- AI Tool: Gemini
+- Purpose/intention : Design and syntax implementation of badges
+- Date(s) 02/06/2026.
+- https://gemini.google.com/share/b4ac44f6b10b
+*/
 class FirebaseBadgeRepository @Inject constructor(
     private val firebaseDatabase: FirebaseDatabase
 ) : BadgeRepository {
@@ -77,7 +84,8 @@ class FirebaseBadgeRepository @Inject constructor(
         val hasReceipt  = transactions.any { !it.receiptUrl.isNullOrBlank() }
         val maxAmount   = transactions.maxOfOrNull { it.amount } ?: 0.0
         val streakDays  = calculateStreak(transactions)
-
+        val streakWeeks = streakDays / 7
+        syncUserStreakToLeaderboard(uid = "pass_current_user_uid_here", currentStreak = streakWeeks)
         return listOf(
             Badge(
                 id          = "first_step",
@@ -175,13 +183,28 @@ class FirebaseBadgeRepository @Inject constructor(
         val expenseType: String,
         val receiptUrl: String?
     )
-}
 
-/*
-Title: Disclosure of AI Usage in my Assessment.
-- Section: FirebaseBadgeRepository.
-- AI Tool: Gemini
-- Purpose/intention : Design and syntax implementation of badges
-- Date(s) 02/06/2026.
-- https://gemini.google.com/share/b4ac44f6b10b
-*/
+    fun syncUserStreakToLeaderboard(uid: String, currentStreak: Int) {
+        // Reference a global top-level leaderboard node instead of the private user node
+        val leaderboardRef = firebaseDatabase.reference.child("leaderboard").child(uid)
+
+        // Fetch the current user profile metadata to attach a friendly display name
+        firebaseDatabase.reference.child("users").child(uid).get()
+            .addOnSuccessListener { snapshot ->
+                val firstName = snapshot.child("firstName").getValue(String::class.java) ?: "Anonymous"
+                val lastName = snapshot.child("lastName").getValue(String::class.java) ?: "User"
+                val fullName = "$firstName ${lastName.take(1)}."
+
+                val leaderboardData = mapOf(
+                    "uid" to uid,
+                    "displayName" to fullName,
+                    "streakWeeks" to currentStreak,
+                    "lastUpdated" to System.currentTimeMillis()
+                )
+
+                leaderboardRef.setValue(leaderboardData)
+            }
+    }
+
+
+}
