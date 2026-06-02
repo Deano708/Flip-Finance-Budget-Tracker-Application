@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
 object NotificationScheduler {
 
     private const val WORK_NAME = "budget_notification_check"
+    private const val IMMEDIATE_WORK_NAME = "immediate_budget_check"
 
     // Call this once from MainActivity after the user is logged in.
     // WorkManager deduplicates by WORK_NAME so calling it multiple times is safe —
@@ -40,6 +41,22 @@ object NotificationScheduler {
             // the job exists on first launch.
             ExistingPeriodicWorkPolicy.KEEP,
             workRequest
+        )
+    }
+
+    fun runImmediateCheck(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val oneTimeRequest = OneTimeWorkRequestBuilder<BudgetNotificationWorker>()
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            IMMEDIATE_WORK_NAME,
+            ExistingWorkPolicy.REPLACE, // Replaces any currently running instant check
+            oneTimeRequest
         )
     }
 

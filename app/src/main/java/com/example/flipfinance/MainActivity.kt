@@ -1,5 +1,7 @@
 package com.example.flipfinance
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +34,7 @@ import com.example.flipfinance.ui.screens.Onboarding.OnboardingScreen
 import com.example.flipfinance.ui.screens.navigation.NavGraph
 import com.example.flipfinance.ui.screens.navigation.Screen
 import com.example.flipfinance.ui.theme.FlipFinanceTheme
+import com.example.flipfinance.workers.NotificationScheduler
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -54,6 +58,19 @@ class MainActivity : ComponentActivity() {
     lateinit var appOpenRepository: AppOpenRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+            ActivityCompat.requestPermissions(
+
+                this,
+
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+
+                1001
+
+            )
+
+        }
 
         // Install the splash screen Before Loading App
         installSplashScreen()
@@ -67,6 +84,15 @@ class MainActivity : ComponentActivity() {
             // null = Loading, false = Show Onboarding, true = To Login
             val hasCompletedOnboarding by mainViewModel.hasCompletedOnboarding.collectAsState()
             val settingsState by settingsViewModel.uiState.collectAsState()
+
+            LaunchedEffect(settingsState.budgetAlertsEnabled) {
+                if (settingsState.budgetAlertsEnabled && FirebaseAuth.getInstance().currentUser != null) {
+                    NotificationScheduler.schedule(this@MainActivity)
+                } else {
+                    // Stop the background 6-hour checks if the user turns the setting off
+                    NotificationScheduler.cancel(this@MainActivity)
+                }
+            }
 
             FlipFinanceTheme(darkTheme = settingsState.isDarkMode) {
                 AnimatedContent(

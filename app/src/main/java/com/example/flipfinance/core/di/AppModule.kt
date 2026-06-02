@@ -13,6 +13,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+
 
 /*
    Title: Adding in simple Firebase Authentication
@@ -35,6 +38,17 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideWorkManagerConfiguration(
+        workerFactory: HiltWorkerFactory
+    ): Configuration {
+        return Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+    }
+
 
     @Provides
     @Singleton
