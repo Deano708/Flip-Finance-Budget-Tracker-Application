@@ -176,53 +176,36 @@ class TransactionViewModel @Inject constructor(
         }
     }
 
-
     // Home screen implementation - For total spent in this month
     val totalSpentThisMonth: StateFlow<Double> = transactions
         .map { list ->
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-
             list.filter {
                 val cal = Calendar.getInstance().apply { timeInMillis = it.date }
                 cal.get(Calendar.MONTH) == currentMonth &&
                         cal.get(Calendar.YEAR) == currentYear &&
                         it.expenseType == "Expense"
             }.sumOf { it.amount }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     // Home - Highest Category Spent
-    val highestCategorySpend: StateFlow<Pair<String, Double>?> = transactions
-        .combine(categories) { txList, catList ->
-            txList.filter { it.expenseType == "Expense" }
-                .groupBy { tx ->
-                    catList.find { it.categoryId == tx.categoryId }?.name ?: "Unknown"
-                }
-                .mapValues { entry -> entry.value.sumOf { it.amount } }
-                .toList()
-                .maxByOrNull { it.second }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val highestCategorySpend: StateFlow<Pair<String, Double>?> = combine(transactions, categories) { txList, catList ->
+        txList.filter { it.expenseType == "Expense" }
+            .groupBy { tx -> catList.find { it.categoryId == tx.categoryId }?.name ?: "Unknown" }
+            .mapValues { entry -> entry.value.sumOf { it.amount } }
+            .toList()
+            .maxByOrNull { it.second }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    // Home - Data for Daily Spending Graph
-    // Groups spending by day of the month for the graph UI
-    val dailySpendingMap: StateFlow<Map<Int, Double>> = transactions
-        .map { list ->
-            val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
-            list.filter {
-                val cal = Calendar.getInstance().apply { timeInMillis = it.date }
-                cal.get(Calendar.MONTH) == currentMonth && it.expenseType == "Expense"
-            }
-                .groupBy {
-                    val cal = Calendar.getInstance().apply { timeInMillis = it.date }
-                    cal.get(Calendar.DAY_OF_MONTH)
-                }
-                .mapValues { it.value.sumOf { it.amount } }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+    val categorySpendingBreakdown: StateFlow<List<Pair<String, Double>>> = combine(transactions, categories) { txList, catList ->
+        txList.filter { it.expenseType == "Expense" }
+            .groupBy { tx -> catList.find { it.categoryId == tx.categoryId }?.name ?: "Unknown" }
+            .mapValues { entry -> entry.value.sumOf { it.amount } }
+            .toList()
+            .sortedByDescending { it.second }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Home - Comparison logic: vs Last Month, returns the percentage increase/decrease
     val spendingComparison: StateFlow<Double> = transactions
         .map { list ->
             val now = Calendar.getInstance()
@@ -239,10 +222,8 @@ class TransactionViewModel @Inject constructor(
                 c.get(Calendar.MONTH) == lastMonth && it.expenseType == "Expense"
             }.sumOf { it.amount }
 
-            if (lastMonthTotal == 0.0) 0.0
-            else ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+            if (lastMonthTotal == 0.0) 0.0 else ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     // Private helper method to resolve the true alphanumeric Firebase string key using the transactionId hash code
     private suspend fun findFirebaseKeyByHash(targetHash: Int): String? {

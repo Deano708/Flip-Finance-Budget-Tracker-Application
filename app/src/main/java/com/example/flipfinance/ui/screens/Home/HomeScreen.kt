@@ -37,9 +37,7 @@ fun HomeScreen(
     // Transaction Data Streams
     val transactions by transactionViewModel.transactions.collectAsState()
     val categoryList by transactionViewModel.categories.collectAsState()
-    val totalSpent by transactionViewModel.totalSpentThisMonth.collectAsState()
     val topCategory by transactionViewModel.highestCategorySpend.collectAsState()
-    val comparison by transactionViewModel.spendingComparison.collectAsState()
     val financeSummary by transactionViewModel.financeSummary.collectAsState()
 
     // Settings Stream
