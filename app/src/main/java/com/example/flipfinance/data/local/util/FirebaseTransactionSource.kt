@@ -47,11 +47,17 @@ class FirebaseTransactionSource @Inject constructor(
                 for (childSnapshot in snapshot.children) {
                     val tx = childSnapshot.getValue(Transaction::class.java)
                     if (tx != null) {
+                        // Extract the real alphanumeric node string key (e.g., the UUID)
+                        val firebaseNodeKey = childSnapshot.key ?: ""
 
-                        transactionList.add(tx)
+                        // Map that string key into a stable integer hash code
+                        val mappedTx = tx.copy(
+                            transactionId = firebaseNodeKey.hashCode()
+                        )
+                        transactionList.add(mappedTx)
                     }
                 }
-                // Sort by timestamp descending (equivalent to Room's ORDER BY date DESC) by the DAO
+                // Sort by timestamp descending
                 trySend(transactionList.sortedByDescending { it.date })
             }
 
