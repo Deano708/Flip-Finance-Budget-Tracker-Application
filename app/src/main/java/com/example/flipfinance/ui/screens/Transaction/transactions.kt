@@ -264,7 +264,10 @@ fun TransactionScreen(
                             ) {
                                 Text(
                                     text = date,
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                                    modifier = Modifier.padding(
+                                        horizontal = 20.dp,
+                                        vertical = 8.dp
+                                    ),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
@@ -292,17 +295,19 @@ fun TransactionScreen(
                 onDismissRequest = { showSheet = false },
                 sheetState = sheetState,
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                dragHandle = { BottomSheetDefaults.DragHandle(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                ) }
+                dragHandle = {
+                    BottomSheetDefaults.DragHandle(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+                }
             ) {
                 TransactionDetailsSheet(
                     transaction = selectedTransaction!!,
-                    categories = categoryList, // <-- IMPLEMENTED STEP 4 HERE
+                    categories = categoryList,
                     currencySymbol = currencySymbol,
                     onDelete = {
-                        val firebaseNodeKey = selectedTransaction!!.transactionId.toString()
-                        viewModel.deleteTransaction(firebaseNodeKey)
+                        // Passes the transaction object into the method (fixing delete issues)
+                        viewModel.deleteTransactionByEntity(selectedTransaction!!)
                         showSheet = false
                     },
                     onEdit = { updatedTransaction ->

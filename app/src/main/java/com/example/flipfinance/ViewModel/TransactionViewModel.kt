@@ -21,7 +21,6 @@ import javax.inject.Inject
 import com.example.flipfinance.data.local.Entities.Category
 import com.example.flipfinance.data.local.dao.CategoryDao
 import com.example.flipfinance.data.local.util.FirebaseTransactionSource
-import com.example.flipfinance.workers.NotificationScheduler
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,8 +79,6 @@ import java.util.UUID
    Code Version: 1
    Availability: https://copilot.microsoft.com/shares/3zFig2DCQubzgp23rKDoS
 */
-
-
 
 @HiltViewModel
 class TransactionViewModel @Inject constructor(
@@ -145,7 +142,7 @@ class TransactionViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-     // Dynamic Income/Expense Summary
+    // Dynamic Income/Expense Summary
     val financeSummary: StateFlow<Pair<Double, Double>> = filteredTransactions
         .map { list ->
             val income = list.filter { it.expenseType.equals("Income", ignoreCase = true) }.sumOf { it.amount }
@@ -208,6 +205,7 @@ class TransactionViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // Home - Data for Daily Spending Graph
+    // Groups spending by day of the month for the graph UI
     val dailySpendingMap: StateFlow<Map<Int, Double>> = transactions
         .map { list ->
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
@@ -245,12 +243,38 @@ class TransactionViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
+    // Private helper method to resolve the true alphanumeric Firebase string key using the transactionId hash code
+    private suspend fun findFirebaseKeyByHash(targetHash: Int): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val snapshot = fbDatabase.getReference("transactions/$currentUserId").get().await()
+                for (child in snapshot.children) {
+                    if ((child.key ?: "").hashCode() == targetHash) {
+                        return@withContext child.key
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("KeyLookupError", "Failed resolving alphanumeric string node from hash reference match", e)
+            }
+            null
+        }
+    }
+
     //made use of suspend to allow for supabase to return the receipt uid so it can be stored in the Database
     suspend fun addTransaction(transaction: Transaction, imageUri: Uri?) {
         withContext(Dispatchers.IO) {
-            var finalImageUrl: String? = null
-            //unique transaction id
-            val uniqueTxId = UUID.randomUUID().toString()
+            var finalImageUrl: String? = transaction.receiptUrl
+
+            // Find the matching transaction by its unique identifying metadata combinations
+            val existingTransaction = transactions.value.find { it.transactionId == transaction.transactionId }
+
+            // Determine the path, to get the existing target id
+            val targetTxId = if (existingTransaction != null) {
+                val matchingNodeKey = findFirebaseKeyByHash(transaction.transactionId)
+                matchingNodeKey ?: UUID.randomUUID().toString()
+            } else {
+                UUID.randomUUID().toString()
+            }
 
             if (imageUri != null) {
                 try {
@@ -259,12 +283,10 @@ class TransactionViewModel @Inject constructor(
                     }
 
                     if (bytes != null) {
-                        val fileName = "receipts/${currentUserId}_${uniqueTxId}.jpg"
-                        //stroing of the image
+                        val fileName = "receipts/${currentUserId}_${targetTxId}.jpg"
                         supabase.storage.from("RecieptStorage").upload(fileName, bytes) {
                             upsert = true
                         }
-                        //image URL to be stored with transaction info
                         finalImageUrl = supabase.storage.from("RecieptStorage").publicUrl(fileName)
                     }
                 } catch (e: Exception) {
@@ -278,15 +300,25 @@ class TransactionViewModel @Inject constructor(
                 receiptUrl = finalImageUrl
             )
 
-            //log errors to help with debugging when uploading a receipt
             try {
                 val firebaseRef = fbDatabase.getReference("transactions/$currentUserId")
-                firebaseRef.child(uniqueTxId).setValue(finalizedTransaction).await()
-                Log.d("FirebaseSuccess", "Transaction successfully written online!")
-                NotificationScheduler.runImmediateCheck(context)
+                firebaseRef.child(targetTxId).setValue(finalizedTransaction).await()
+                Log.d("FirebaseSuccess", "Transaction successfully written/updated at node path: $targetTxId")
             } catch (dbEx: Exception) {
                 Log.e("DatabaseError", "Firebase execution failure writing transaction: ${dbEx.message}")
                 throw dbEx
+            }
+        }
+    }
+
+    // Delete method to ensure delete functionality by entity
+    fun deleteTransactionByEntity(transaction: Transaction) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val realFirebaseKey = findFirebaseKeyByHash(transaction.transactionId)
+            if (realFirebaseKey != null) {
+                firebaseSource.deleteTransaction(currentUserId, realFirebaseKey)
+            } else {
+                Log.e("DeleteError", "Could not locate matching online node key for transaction ID: ${transaction.transactionId}")
             }
         }
     }
@@ -310,7 +342,7 @@ class TransactionViewModel @Inject constructor(
                     dao.insertTransaction(affected.copy(categoryId = ""))
                 }
 
-            // Remove from RoomDB
+            // Remove from RoomDB (categories)
             categoryDao.deleteCategory(id = category.categoryId, userId = currentUserId)
 
             // Remove from Firebase RTDB
