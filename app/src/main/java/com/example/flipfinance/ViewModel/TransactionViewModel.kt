@@ -207,7 +207,6 @@ class TransactionViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // Home - Data for Daily Spending Graph
-    // Groups spending by day of the month for the graph UI
     val dailySpendingMap: StateFlow<Map<Int, Double>> = transactions
         .map { list ->
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH)

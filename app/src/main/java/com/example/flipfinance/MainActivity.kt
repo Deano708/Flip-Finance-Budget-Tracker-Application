@@ -19,8 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.flipfinance.Preferences.Achievements.AppOpenRepository
 import com.example.flipfinance.ViewModel.AuthViewModel
 import com.example.flipfinance.ViewModel.MainViewModel
 import com.example.flipfinance.ViewModel.SettingsViewModel
@@ -29,7 +31,10 @@ import com.example.flipfinance.ui.screens.Onboarding.OnboardingScreen
 import com.example.flipfinance.ui.screens.navigation.NavGraph
 import com.example.flipfinance.ui.screens.navigation.Screen
 import com.example.flipfinance.ui.theme.FlipFinanceTheme
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /*
    Title: Create an Intro/Onboarding Screen with Jetpack Compose | Kotlin | Tranquilly Coding
@@ -40,8 +45,14 @@ import dagger.hilt.android.AndroidEntryPoint
    Availability: https://youtu.be/AtNCGtMjavk?si=a_H9Vw6HTCQE-brD
 */
 
+
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var appOpenRepository: AppOpenRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         // Install the splash screen Before Loading App
@@ -101,7 +112,8 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 // After login, takes you to homescreen.
-                                else if (currentUser != null && (currentRoute == null || currentRoute in authRoutes)) {
+                                //mark
+                                else if (currentUser != null && currentRoute in authRoutes) {
                                     navController.navigate(Screen.Home.route) {
                                         popUpTo(Screen.Login.route) { inclusive = true }
                                     }
@@ -124,6 +136,17 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Only record an open if a user is actually logged in — avoids writing
+        // guest_user records on the login/onboarding screen before auth completes.
+        if (::appOpenRepository.isInitialized && FirebaseAuth.getInstance().currentUser != null) {
+            lifecycleScope.launch {
+                appOpenRepository.recordOpenToday()
             }
         }
     }
