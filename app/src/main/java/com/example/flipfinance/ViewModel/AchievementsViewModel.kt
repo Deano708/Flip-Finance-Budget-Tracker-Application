@@ -110,8 +110,9 @@ class AchievementsViewModel @Inject constructor(
         val currentWeekDays = allWeeklyActivity.firstOrNull()?.daysWithTransactions ?: emptySet()
         val orderedDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         val weeklyTransactionDays = orderedDays.associateWith { it in currentWeekDays }
-        val userIndex = rankedUsers.indexOfFirst { it.uid == currentUserId }
-        val calculatedRank = if (userIndex != -1) userIndex + 1 else rankedUsers.size + 1
+        val currentUserScore = rankedUsers.find { it.uid == currentUserId }?.streakWeeks ?: appOpenStreakWeeks
+        val calculatedRank = rankedUsers.count { it.streakWeeks > currentUserScore } + 1
+        val totalUsersCount = if (rankedUsers.any { it.uid == currentUserId }) rankedUsers.size else rankedUsers.size + 1
 
         AchievementsUiState(
             inputStreakWeeks = inputStreakWeeks,
@@ -120,7 +121,7 @@ class AchievementsViewModel @Inject constructor(
             allWeeklyActivity = allWeeklyActivity,
             badges = liveBadges,
             currentRank = calculatedRank,
-            totalParticipants = rankedUsers.size,
+            totalParticipants = totalUsersCount,
             fullLeaderboard = rankedUsers
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AchievementsUiState())
