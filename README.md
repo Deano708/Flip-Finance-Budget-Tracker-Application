@@ -156,7 +156,8 @@ jobs:
         run: ./gradlew testDebugUnitTest
 
       - name: Verify Clean Production Compilations
-        run: ./gradlew assembleDebug```
+        run: ./gradlew assembleDebug
+```
 
 ## Implementation Details
 
