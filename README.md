@@ -30,11 +30,17 @@ The architecture of FlipFinance is shaped by deliberate engineering and product 
 - **Identity Management**: Powered by **Firebase Authentication** for secure email/password sign-in.
 - **Self-Service Password Recovery**: Integrated "Forgot Password" flow utilizing Firebase's secure email reset system.
 - **First-Launch Experience**: A high-fidelity, 3-screen interactive onboarding pager designed to introduce core value propositions.
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-45-30-35_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/3e656fea-bd77-41ad-b37d-4d00e7777dc9" />
+
+
 
 ### Global Settings & Personalization
 - **Multi-Currency Support**: A centralized preference system allowing users to toggle between international currency symbols (ZAR, USD, EUR, GBP). This state is injected globally, ensuring every financial string in the app updates reactively.
 - **Dynamic Greeting System**: Implements time-aware logic to provide contextual greetings (Morning/Afternoon/Evening) paired with adaptive iconography.
 - **Persistence-Driven Dark Mode**: Integrates Jetpack DataStore with the Material 3 ColorScheme to provide a persistent Dark Theme that respects user choice across application restarts.
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-46-03-07_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/60c894cc-5552-4881-bf7e-4534b61f179d" />
+
+
 
 ### Transaction Management & Analytics
 - **Asynchronous Cloud Source**: Full CRUD operations streams directly from **Firebase Realtime Database**, facilitating cloud synchronization across different device targets.
@@ -45,16 +51,44 @@ The architecture of FlipFinance is shaped by deliberate engineering and product 
 - **Visualisation**: Grouped transaction history with sticky date headers and dynamic color-coding for financial health tracking.
 - **Dynamic Category Allocation**: "+ Add" interactive pill injection inside filter states for provisioning runtime, user-defined custom categories seamlessly.
 - **Gesture-Driven Deletion Flow**: Advanced UX supporting a "Long-Press to Edit Mode" on transaction filter elements, dynamically sliding out quick-removal controls.
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-47-07-84_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/666f102c-e71c-4595-824c-6a745bfcb7de" />
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-47-15-28_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/69246853-5522-44ff-8f7a-ae98fada3ad4" />
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-48-01-34_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/28c09a25-a675-4676-816f-b34029a2d8ab" />
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-48-22-04_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/99b3b523-3bfc-413b-a63e-468a4118f438" />
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-49-55-01_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/21c931c7-f574-4447-aaa1-4beb0aa6e204" />
+
+
 
 ### Input Validation & UX
 - **Context-Aware Error Handling**: Field-level validation that guides users with specific messages (e.g., "Invalid email format" or "Password too short").
 - **Reactive UI**: Error states clear automatically as the user begins typing, providing immediate positive feedback.
 - **Server-Side Feedback**: Technical Firebase exceptions are mapped to human-readable strings for a smoother user experience.
 
+
+
 ### Navigation & Architecture
 - **Multi-Screen Navigation**: Implemented using **Jetpack Compose Navigation** with a centralized `NavGraph`.
 - **Bottom Navigation System**: A modern, Material 3-compliant bottom bar allowing seamless transitions between Expenses, Goals, and Profile.
 - **Conditional UI**: The bottom navigation is context-aware, hiding itself during the authentication flow and only appearing once a user is verified.
+- <img width="1240" height="418" alt="Navbar" src="https://github.com/user-attachments/assets/b39d3931-edeb-4de8-b5fe-9e584d2d63c6" />
+
+
+
+### Achievements & Badges Gamification
+- **Dual Streak system recording both transaction inputs and application log-in.
+- **Badges and Global Leaderboard collectively showing gamification achievements & tier list of users
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-54-03-46_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/350ed7d7-56f1-405d-b5b9-a2c41c04f945" />
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-54-13-79_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/592f5b34-7201-4ddd-86e8-80820ff07bed" />
+
+
+
+### Budget & Notifications
+- **Implementation of Minimum and Maximum budget threshold.
+- **Immediate, 6 hourly and monthly budget notifications for over and under budget.
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-12-01-43-21_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/a848ddfb-2245-4fce-8bbc-c4a7f49f4e2b" />
+- <img width="1240" height="2772" alt="Screenshot_2026-06-03-11-52-07-19_e42e738a559b3772f2bbbe53749f6ae2" src="https://github.com/user-attachments/assets/896b7382-ca0b-4857-90b8-ba2e0f0a4052" />
+
+
 
 ---
 
