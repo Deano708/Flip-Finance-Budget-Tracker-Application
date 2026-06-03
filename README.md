@@ -119,7 +119,7 @@ The project follows a strict branch-protection model to safeguard main-line rele
 * `feature/*`: Granular, task-isolated working branches (e.g., `feature/date-range-filter`). Merges into development require an approved Pull Request (PR).
 
 ### GitHub Actions Automation Pipeline
-Every time a developer opens a Pull Request or pushes code to the repository, an automated CI script triggers via a headless Ubuntu pipeline (`.github/workflows/android-ci.yml`). This workflow verifies code safety through the following sequence:
+Every time a developer opens a Pull Request or pushes code to the repository, an automated CI script triggers via a headless Ubuntu pipeline. This workflow verifies code safety through the following sequence:
 
 ```yaml
 # Summary of the automated checks executed on GitHub Actions cloud nodes
