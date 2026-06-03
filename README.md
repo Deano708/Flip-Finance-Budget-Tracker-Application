@@ -123,40 +123,55 @@ Every time a developer opens a Pull Request or pushes code to the repository, an
 
 ```yaml
 # Summary of the automated checks executed on GitHub Actions cloud nodes
-name: Android CI Verification Pipeline
+name: Android CI
 
 on:
   push:
-    branches: [ main, development ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main, development ]
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  verify-build:
+  build:
     runs-on: ubuntu-latest
+    # JOB-LEVEL ENV: Ensures secrets are available to the compiler during all tasks
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
     steps:
-      - name: Checkout Source Code repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java Development Kit (JDK 17)
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
           java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-      - name: Cache Gradle Packages (Speeds up sequential run processes)
-        uses: actions/cache@v4
+      # Decodes secret back into a physical file for the Firebase plugin
+      - name: Decode Google Services JSON
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > app/google-services.json
+
+      # Injects Supabase keys into the runner's local properties as a redundant fallback
+      - name: Create local.properties
+        run: |
+          echo "supabase.url=${{ secrets.SUPABASE_URL }}" >> local.properties
+          echo "supabase.key=${{ secrets.SUPABASE_KEY }}" >> local.properties
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean assembleDebug test --stacktrace
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
-      - name: Execute Static Code Analysis & Unit Tests
-        run: ./gradlew testDebugUnitTest
-
-      - name: Verify Clean Production Compilations
-        run: ./gradlew assembleDebug
+          name: FlipFinance-Debug-Build
+          path: app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## Implementation Details
