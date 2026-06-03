@@ -165,13 +165,12 @@ class TransactionViewModel @Inject constructor(
         )
 
         viewModelScope.launch(Dispatchers.IO) {
-            // Write locally - (Offline Mode)
+            // Writes locally for RoomDB
             categoryDao.insertCategory(newCategory)
 
-            // Write Online (Firebase Synchronization)
+            // Write Online for firebase
             rtdbRef.child(uniqueId).setValue(newCategory)
                 .addOnFailureListener {
-                    // On Failure Create Code - On to You mr Fraser
                 }
         }
     }
@@ -282,6 +281,7 @@ class TransactionViewModel @Inject constructor(
                 receiptUrl = finalImageUrl
             )
 
+            //Logging used for debugging purposes.
             try {
                 val firebaseRef = fbDatabase.getReference("transactions/$currentUserId")
                 firebaseRef.child(targetTxId).setValue(finalizedTransaction).await()

@@ -38,7 +38,7 @@ class FirebaseTransactionSource @Inject constructor(
             return@callbackFlow
         }
 
-        //path in Firebase
+        //path in Firebase that transactions are fetched from
         val ref = fbDatabase.getReference("transactions/$currentUserId")
 
         val listener = object : ValueEventListener {
@@ -62,7 +62,7 @@ class FirebaseTransactionSource @Inject constructor(
             }
 
             override fun onCancelled(error: DatabaseError) {
-                //Gives error message in logcat if the process fails to add transaction to list.
+                //Gives error message in logcat if the process fails to add transaction to list. debugging purposes
                 Log.e(
                     "FirebaseTransactionSource",
                     "Failed to read transactions: ${error.message}",
@@ -81,9 +81,9 @@ class FirebaseTransactionSource @Inject constructor(
         ref.setValue(transaction)
     }
 
+    //deletes transactions
     fun deleteTransaction(currentUserId: String, transactionId: String) {
         if (currentUserId.isBlank() || transactionId.isBlank()) return
         fbDatabase.getReference("transactions/$currentUserId").child(transactionId).removeValue()
     }
 }
-// Test Commit for merge reasons.
